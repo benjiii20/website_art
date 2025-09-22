@@ -1,0 +1,67 @@
+/* Reset default margins and set font */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center; /* Perfect vertical centering */
+}
+
+/* Make the form container wider to match the drawn logo area */
+.login-wrapper {
+  padding: 2rem;
+  border-radius: 10px;
+  width: 360px;             /* ← match your drawn width here */
+}
+
+
+/* Form styling */
+#loginForm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Heading */
+#loginForm h1 {
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* Input fields */
+#loginForm input {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Button styling */
+#loginForm button {
+  padding: 8px;
+  font-size: 1rem;
+  background-color:gray;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#loginForm button:hover {
+  background-color: gray;
+}
+
+/* Error message */
+#login-error {
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.login-logo {
+  display: block;
+  margin: 0 auto 20px auto;
+  width: 100%;              /* ← now it fills 360px exactly */
+  height: auto;
+}

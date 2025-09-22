@@ -1,0 +1,82 @@
+<!-- public/search_page/search_bar.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Artist Search</title>
+  <link rel="stylesheet" href="search_styles.css">
+
+  <!-- Supabase keys (okay for client; RLS protects writes) -->
+  <script>
+    window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+  </script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Our search logic -->
+  <script defer src="search.js"></script>
+</head>
+<body>
+  <div class="search-container">
+    <!-- Search bar + filters -->
+    <div class="search-controls">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="Name, genre, region"
+        class="search-input"
+      />
+
+      <div class="filters">
+        <!-- (Optional) Genre — keep only if you store it in DB -->
+        <select id="filterGenre">
+          <option value="">Genre</option>
+          <option>Painting</option>
+        </select>
+
+        <!-- Region (drives Country list) -->
+        <select id="filterRegion">
+          <option value="">Region</option>
+          <!-- Africa -->
+          <option>North Africa</option>
+          <option>West Africa</option>
+          <option>East Africa</option>
+          <option>Central Africa</option>
+          <option>Southern Africa</option>
+          <!-- Americas -->
+          <option>North America</option>
+          <option>Central America</option>
+          <option>Caribbean</option> <!-- fixed spelling -->
+          <option>South America</option>
+        </select>
+
+        <!-- Country (populated after Region is chosen) -->
+        <select id="filterCountry" disabled>
+          <option value="">Country</option>
+        </select>
+
+        <!-- Gender -->
+        <select id="filterGender">
+          <option value="">Gender</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="nonbinary">Non-binary</option>
+          <option value="other">Other</option>
+          <option value="prefer_not_to_say">Prefer not to say</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Dynamic results get injected here -->
+    <div class="results"></div>
+
+    <!-- Pagination MUST be outside .results so it doesn't get cleared -->
+    <div class="pagination">
+      <button disabled>‹</button>
+      <span>1 of 1</span>
+      <button>›</button>
+    </div>
+  </div>
+</body>
+</html>

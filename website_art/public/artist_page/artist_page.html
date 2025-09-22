@@ -1,0 +1,202 @@
+<!-- public/artist_page/artist_page.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Artist</title>
+  <link rel="stylesheet" href="artist_page.css" />
+
+  <!-- Supabase keys -->
+  <script>
+    window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+  </script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="artist_page-wrapper" id="artistRoot">
+    <a href="../search_page/search_bar.html" class="back-btn" aria-label="Back to search page">&lt;</a>
+
+    <!-- Simple artist header -->
+    <header class="artist-header" style="display:flex;gap:16px;align-items:center;margin:8px 0 16px;">
+      <img id="artistAvatar" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:none;" />
+      <div>
+        <h1 id="artistName" style="margin:0;font-size:1.6rem;"></h1>
+        <p id="artistMeta" style="margin:.25rem 0 0;color:#666;font-size:.95rem;"></p>
+      </div>
+    </header>
+    <p id="artistBio" style="margin:0 0 20px;line-height:1.5;"></p>
+
+    <div class="gallery" aria-label="Artwork gallery">
+      <div class="track" id="track"></div>
+
+      <!-- Controls -->
+      <button type="button" class="nav prev" id="prev" aria-label="Previous slide">‹</button>
+      <button type="button" class="nav next" id="next" aria-label="Next slide">›</button>
+
+      <!-- Dots -->
+      <div class="dots" id="dots" aria-label="Slide pagination"></div>
+    </div>
+
+    <!-- Dynamic description (stays here) -->
+    <p id="artwork-desc" aria-live="polite"></p>
+  </div>
+
+  <!-- Data + slider logic -->
+  <script>
+    (async function () {
+      // --- fetch artist + artworks from Supabase ---
+      const params = new URLSearchParams(window.location.search);
+      const slug = params.get('slug');
+      if (!slug) {
+        document.getElementById('artistRoot').innerHTML = '<p>Missing artist slug.</p>';
+        return;
+      }
+
+      const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+      // 1) artist
+      const { data: artist, error: artistErr } = await supa
+        .from('artists').select('*').eq('slug', slug).maybeSingle();
+      if (artistErr) {
+        console.error(artistErr);
+        document.getElementById('artistRoot').innerHTML = '<p>Error loading artist.</p>';
+        return;
+      }
+      if (!artist) {
+        document.getElementById('artistRoot').innerHTML = '<p>Artist not found.</p>';
+        return;
+      }
+
+      // Fill header
+      document.title = artist.name + ' — Artist';
+      const avatarEl = document.getElementById('artistAvatar');
+      const nameEl   = document.getElementById('artistName');
+      const metaEl   = document.getElementById('artistMeta');
+      const bioEl    = document.getElementById('artistBio');
+
+      nameEl.textContent = artist.name || '';
+      metaEl.textContent = [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
+      bioEl.textContent  = artist.bio || '';
+      if (artist.avatar_url) {
+        avatarEl.src = artist.avatar_url;
+        avatarEl.alt = artist.name;
+        avatarEl.style.display = 'block';
+      }
+
+      // 2) artworks
+      const { data: arts, error: artsErr } = await supa
+        .from('artworks')
+        .select('id,title,description,image_url,year')
+        .eq('artist_id', artist.id)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false });
+
+      if (artsErr) console.error(artsErr);
+
+      const track   = document.getElementById('track');
+      const makeFig = (a) => {
+        const fig = document.createElement('figure');
+        fig.className = 'slide';
+        if (a.description) fig.dataset.desc = a.description;
+        const safeTitle = a.title || 'Artwork';
+        const cap = a.year ? `${safeTitle} (${a.year})` : safeTitle;
+        fig.innerHTML = `
+          ${a.image_url ? `<img src="${a.image_url}" alt="${safeTitle}" loading="lazy" />`
+                        : `<img src="../sample_images/sample_img.png" alt="${safeTitle}" loading="lazy" />`}
+          <figcaption>${cap}</figcaption>
+        `;
+        return fig;
+      };
+
+      if (arts && arts.length) {
+        arts.forEach(a => track.appendChild(makeFig(a)));
+      } else if (artist.hero_image_url) {
+        // fallback to hero if no artworks yet
+        track.appendChild(makeFig({ title: artist.name, description: artist.bio, image_url: artist.hero_image_url }));
+      } else {
+        // final fallback sample
+        track.appendChild(makeFig({ title: 'Sample', description: 'No artworks yet.', image_url: '../sample_images/sample_img.png' }));
+      }
+
+      // --- slider UI (runs after slides exist) ---
+      const slides  = Array.from(track.children);
+      const btnPrev = document.getElementById('prev');
+      const btnNext = document.getElementById('next');
+      const dotsWrap= document.getElementById('dots');
+      const descEl  = document.getElementById('artwork-desc');
+
+      let index = 0;
+      let startX = 0, currentX = 0, isDragging = false;
+      const threshold = 40;
+
+      dotsWrap.innerHTML = '';
+      slides.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+        b.addEventListener('click', () => goTo(i));
+        dotsWrap.appendChild(b);
+      });
+
+      function update() {
+        track.style.transform = `translateX(-${index * 100}%)`;
+        Array.from(dotsWrap.children).forEach((b, i) =>
+          b.setAttribute('aria-current', i === index ? 'true' : 'false')
+        );
+        btnPrev.disabled = (index === 0);
+        btnNext.disabled = (index === slides.length - 1);
+
+        const slide = slides[index];
+        const fromData = slide.dataset.desc;
+        const fromCaption = slide.querySelector('figcaption')?.textContent?.trim();
+        if (descEl) descEl.textContent = fromData || fromCaption || '';
+      }
+
+      function goTo(i) { index = Math.max(0, Math.min(i, slides.length - 1)); update(); }
+      const next = () => goTo(index + 1);
+      const prev = () => goTo(index - 1);
+
+      btnNext.addEventListener('click', next);
+      btnPrev.addEventListener('click', prev);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') next();
+        if (e.key === 'ArrowLeft')  prev();
+      });
+
+      track.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        currentX = startX;
+        track.style.transition = 'none';
+      }, { passive: true });
+
+      track.addEventListener('touchmove', (e) => {
+        if (!isDragging) return;
+        currentX = e.touches[0].clientX;
+        const dx = currentX - startX;
+        const percent = (dx / track.clientWidth) * 100;
+        const base = -index * 100;
+        track.style.transform = `translateX(${base + percent}%)`;
+      }, { passive: true });
+
+      function endSwipe() {
+        if (!isDragging) return;
+        isDragging = false;
+        track.style.transition = 'transform 300ms ease';
+        const dx = currentX - startX;
+        if (dx > threshold) prev();
+        else if (dx < -threshold) next();
+        else update();
+      }
+      track.addEventListener('touchend', endSwipe, { passive: true });
+      track.addEventListener('touchcancel', endSwipe, { passive: true });
+
+      // Init
+      update();
+    })();
+  </script>
+</body>
+</html>

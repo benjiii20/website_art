@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin — Art Platform</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<!-- ✅ Use UMD build so window.supabase is defined -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root { --gap: 12px; }
+  body { font-family: system-ui, Arial, sans-serif; margin: 24px; max-width: 1100px; }
+  h1, h2 { margin: 0 0 8px; }
+  section { margin: 24px 0; padding: 16px; border: 1px solid #eee; border-radius: 12px; }
+  form { display:grid; gap: var(--gap); }
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
+  .row3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--gap); }
+  input, select, textarea, button { padding:10px; font-size:14px; }
+  button { cursor:pointer; }
+  .muted { color:#666; font-size: 12px; }
+  .success { color: #137333; }
+  .error { color:#b80606; }
+  .stack { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
+  img.preview { width:88px; height:88px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; }
+  th, td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
+</style>
+</head>
+<body>
+
+<!-- 0) KEYS -->
+<script>
+  // ⬇️ set these (same as on your search & artist pages)
+  window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+
+  // Storage bucket names
+  window.ARTIST_BUCKET   = 'artists';   // avatar & hero images
+  window.ARTWORKS_BUCKET = 'artworks';  // artwork images
+</script>
+
+<h1>Admin</h1>
+<p class="muted">Sign in, create artists, upload images, and add artworks.</p>
+
+<!-- 1) AUTH -->
+<section>
+  <h2>Sign in</h2>
+  <div id="authBox" class="stack">
+    <input id="email" type="email" placeholder="you@example.com" />
+    <button id="sendMagic">Send magic link</button>
+    <span id="authMsg" class="muted"></span>
+  </div>
+  <div id="sessionBox" class="stack" style="display:none">
+    <span>Signed in as <b id="whoami"></b></span>
+    <button id="signOut">Sign out</button>
+  </div>
+</section>
+
+<!-- 2) CREATE / UPDATE ARTIST -->
+<section>
+  <h2>Create / Update Artist</h2>
+  <form id="artistForm">
+    <div class="row">
+      <input id="artistName" placeholder="Name" required />
+      <input id="artistSlug" placeholder="Slug (optional; auto from name)" />
+    </div>
+    <textarea id="artistBio" rows="4" placeholder="Bio"></textarea>
+
+    <div class="row3">
+      <select id="artistGender">
+        <option value="">Gender</option>
+        <option value="male">Male</option><option value="female">Female</option>
+        <option value="nonbinary">Non-binary</option><option value="other">Other</option>
+        <option value="prefer_not_to_say">Prefer not to say</option>
+      </select>
+
+      <select id="artistRegion">
+        <option value="">Region</option>
+        <option>North Africa</option><option>West Africa</option><option>East Africa</option>
+        <option>Central Africa</option><option>Southern Africa</option>
+        <option>North America</option><option>Central America</option><option>Caribbean</option>
+        <option>South America</option>
+      </select>
+
+      <!-- Country starts disabled; enabled after region is chosen -->
+      <select id="artistCountry" disabled>
+        <option value="">Country</option>
+      </select>
+    </div>
+
+    <div class="row">
+      <div>
+        <label class="muted">Avatar image</label>
+        <div class="stack">
+          <input type="file" id="avatarFile" accept="image/*" />
+          <img id="avatarPreview" class="preview" style="display:none" />
+        </div>
+      </div>
+      <div>
+        <label class="muted">Hero image</label>
+        <div class="stack">
+          <input type="file" id="heroFile" accept="image/*" />
+          <img id="heroPreview" class="preview" style="display:none" />
+        </div>
+      </div>
+    </div>
+
+    <div class="stack">
+      <button type="submit">Save artist</button>
+      <span id="artistOut" class="muted"></span>
+    </div>
+  </form>
+</section>
+
+<!-- 3) ARTWORKS -->
+<section>
+  <h2>Add Artwork</h2>
+  <div class="row">
+    <select id="artistSelect">
+      <option value="">Select artist…</option>
+    </select>
+    <button id="refreshArtists" type="button">Refresh list</button>
+  </div>
+
+  <form id="artForm" style="margin-top:12px">
+    <div class="row">
+      <input id="artTitle" placeholder="Title" required />
+      <input id="artYear" type="number" placeholder="Year" />
+    </div>
+    <textarea id="artDesc" rows="3" placeholder="Description"></textarea>
+    <div class="stack">
+      <input type="file" id="artImage" accept="image/*" />
+      <img id="artPreview" class="preview" style="display:none" />
+    </div>
+    <div class="stack">
+      <button type="submit">Create artwork</button>
+      <span id="artOut" class="muted"></span>
+    </div>
+  </form>
+
+  <div id="artworksWrap">
+    <h3 style="margin-top:16px">Existing artworks</h3>
+    <table id="artworksTable">
+      <thead><tr><th>Image</th><th>Title</th><th>Year</th><th>Description</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+  // ---------- Setup ----------
+  const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  const ARTIST_BUCKET = window.ARTIST_BUCKET || 'artists';
+  const ARTWORKS_BUCKET = window.ARTWORKS_BUCKET || 'artworks';
+
+  // Region -> Countries map (Africa + Americas)
+  const REGION_COUNTRIES = {
+    "North Africa": ["Algeria","Egypt","Libya","Morocco","Sudan","Tunisia"],
+    "West Africa": ["Benin","Burkina Faso","Cabo Verde","Côte d’Ivoire","Gambia","Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Mauritania","Niger","Nigeria","Senegal","Sierra Leone","Togo"],
+    "East Africa": ["Burundi","Comoros","Djibouti","Eritrea","Ethiopia","Kenya","Madagascar","Malawi","Mauritius","Mozambique","Rwanda","Seychelles","Somalia","South Sudan","Tanzania","Uganda"],
+    "Central Africa": ["Angola","Cameroon","Central African Republic","Chad","Congo","Democratic Republic of the Congo","Equatorial Guinea","Gabon","São Tomé and Príncipe"],
+    "Southern Africa": ["Botswana","Eswatini","Lesotho","Namibia","South Africa","Zambia","Zimbabwe"],
+    "North America": ["Canada","United States","Mexico","Greenland"],
+    "Central America": ["Belize","Costa Rica","El Salvador","Guatemala","Honduras","Nicaragua","Panama"],
+    "Caribbean": ["Antigua and Barbuda","Bahamas","Barbados","Cuba","Dominica","Dominican Republic","Grenada","Haiti","Jamaica","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Trinidad and Tobago"],
+    "South America": ["Argentina","Bolivia","Brazil","Chile","Colombia","Ecuador","Guyana","Paraguay","Peru","Suriname","Uruguay","Venezuela"]
+  };
+
+  // -------- Robust Region → Country helpers --------
+  const REGION_ALIASES = {
+    "north africa":"North Africa","west africa":"West Africa","east africa":"East Africa",
+    "central africa":"Central Africa","southern africa":"Southern Africa",
+    "north america":"North America","central america":"Central America",
+    "caribbean":"Caribbean","carribean":"Caribbean"
+  };
+  function normalizeRegionLabel(label){ if(!label) return ""; const k=label.trim().toLowerCase(); return REGION_ALIASES[k] || label.trim(); }
+  function resetCountrySelect(selectEl){ selectEl.innerHTML = '<option value="">Country</option>'; selectEl.disabled = true; }
+  function populateCountries(regionLabel, selectEl){
+    const region = normalizeRegionLabel(regionLabel);
+    resetCountrySelect(selectEl);
+    const list = REGION_COUNTRIES[region];
+    if(!list) return;
+    list.forEach(c => { const opt=document.createElement('option'); opt.value=c; opt.textContent=c; selectEl.appendChild(opt); });
+    selectEl.disabled = false;
+  }
+
+  // Basic helpers
+  function slugify(s){ return (s||'').toLowerCase().normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+  async function uploadPublic(bucket, key, file){
+    if(!file) return null;
+    const { error } = await supa.storage.from(bucket).upload(key, file, { upsert: true });
+    if(error) throw error;
+    return supa.storage.from(bucket).getPublicUrl(key).data.publicUrl;
+  }
+
+  // ---------- AUTH ----------
+  const authBox = document.getElementById('authBox');
+  const sessionBox = document.getElementById('sessionBox');
+  const whoami = document.getElementById('whoami');
+  const authMsg = document.getElementById('authMsg');
+
+  async function refreshSessionUI(){
+    const { data: { session} } = await supa.auth.getSession();
+    if (session?.user) {
+      authBox.style.display = 'none';
+      sessionBox.style.display = 'flex';
+      whoami.textContent = session.user.email || session.user.id;
+    } else {
+      authBox.style.display = 'flex';
+      sessionBox.style.display = 'none';
+    }
+  }
+  document.getElementById('sendMagic').onclick = async () => {
+    const email = document.getElementById('email').value.trim();
+    const { error } = await supa.auth.signInWithOtp({ email });
+    authMsg.textContent = error ? error.message : 'Magic link sent. Check your email.';
+    authMsg.className = error ? 'error' : 'success';
+  };
+  document.getElementById('signOut').onclick = async () => { await supa.auth.signOut(); refreshSessionUI(); };
+  supa.auth.onAuthStateChange(() => refreshSessionUI());
+  refreshSessionUI();
+
+  // ---------- ARTISTS ----------
+  const artistForm = document.getElementById('artistForm');
+  const artistOut  = document.getElementById('artistOut');
+  const nameEl = document.getElementById('artistName');
+  const slugEl = document.getElementById('artistSlug');
+  const bioEl  = document.getElementById('artistBio');
+  const genderEl = document.getElementById('artistGender');
+  const regionEl = document.getElementById('artistRegion');
+  const countryEl= document.getElementById('artistCountry');
+  const avatarFile = document.getElementById('avatarFile');
+  const heroFile   = document.getElementById('heroFile');
+  const avatarPrev = document.getElementById('avatarPreview');
+  const heroPrev   = document.getElementById('heroPreview');
+
+  // Populate when region changes
+  regionEl.addEventListener('change', () => {
+    populateCountries(regionEl.value, countryEl);
+  });
+
+  // If editing and Region is already set, populate on load
+  if (regionEl.value) {
+    populateCountries(regionEl.value, countryEl);
+  }
+
+  // Other listeners
+  avatarFile.addEventListener('change', () => {
+    if (avatarFile.files[0]) { avatarPrev.src = URL.createObjectURL(avatarFile.files[0]); avatarPrev.style.display='block'; }
+  });
+  heroFile.addEventListener('change', () => {
+    if (heroFile.files[0]) { heroPrev.src = URL.createObjectURL(heroFile.files[0]); heroPrev.style.display='block'; }
+  });
+
+  // Submit handler
+  artistForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = nameEl.value.trim();
+    if (!name) return;
+    const slug = (slugEl.value.trim() || slugify(name));
+
+    try {
+      const ts = Date.now();
+      const avatar_url = avatarFile.files[0] ? await uploadPublic(ARTIST_BUCKET, `avatars/${slug}-${ts}`, avatarFile.files[0]) : null;
+      const hero_image_url = heroFile.files[0] ? await uploadPublic(ARTIST_BUCKET, `heroes/${slug}-${ts}`, heroFile.files[0]) : null;
+
+      const payload = {
+        name, slug,
+        bio: bioEl.value,
+        gender: genderEl.value || null,
+        region_sub: normalizeRegionLabel(regionEl.value) || null,
+        country: countryEl.value || null,
+        is_published: true
+      };
+      if (avatar_url) payload.avatar_url = avatar_url;
+      if (hero_image_url) payload.hero_image_url = hero_image_url;
+
+      const { data, error } = await supa
+        .from('artists')
+        .upsert(payload, { onConflict: 'slug' })
+        .select()
+        .single();
+
+      if (error) throw error;
+      artistOut.textContent = `Saved ✔ — id: ${data.id}, slug: ${data.slug}`;
+      artistOut.className = 'success';
+      loadArtistsIntoSelect(); // refresh dropdown
+    } catch (err) {
+      artistOut.textContent = 'Error: ' + (err.message || err);
+      artistOut.className = 'error';
+    }
+  });
+
+  // ---------- ARTWORKS ----------
+  const artistSelect = document.getElementById('artistSelect');
+  const refreshArtistsBtn = document.getElementById('refreshArtists');
+  const artForm = document.getElementById('artForm');
+  const artTitle = document.getElementById('artTitle');
+  const artYear  = document.getElementById('artYear');
+  const artDesc  = document.getElementById('artDesc');
+  const artImage = document.getElementById('artImage');
+  const artPrev  = document.getElementById('artPreview');
+  const artOut   = document.getElementById('artOut');
+  const artworksTableBody = document.querySelector('#artworksTable tbody');
+
+  artImage.addEventListener('change', () => {
+    if (artImage.files[0]) { artPrev.src = URL.createObjectURL(artImage.files[0]); artPrev.style.display='block'; }
+  });
+
+  async function loadArtistsIntoSelect(){
+    const { data, error } = await supa.from('artists')
+      .select('id,name,slug')
+      .eq('is_published', true)
+      .order('name', { ascending: true });
+    artistSelect.innerHTML = '<option value="">Select artist…</option>';
+    if (error) return;
+    (data || []).forEach(a => {
+      const opt = document.createElement('option');
+      opt.value = a.id;
+      opt.textContent = `${a.name} — ${a.slug}`;
+      artistSelect.appendChild(opt);
+    });
+  }
+
+  async function loadArtworksTable(artistId){
+    artworksTableBody.innerHTML = '';
+    if (!artistId) return;
+    const { data, error } = await supa.from('artworks')
+      .select('id,title,year,description,image_url')
+      .eq('artist_id', artistId)
+      .order('created_at', { ascending: false });
+    if (error) return;
+    (data || []).forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.image_url ? `<img src="${a.image_url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee" />` : ''}</td>
+        <td>${a.title || ''}</td>
+        <td>${a.year || ''}</td>
+        <td>${a.description ? a.description.substring(0,140)+(a.description.length>140?'…':'') : ''}</td>
+      `;
+      artworksTableBody.appendChild(tr);
+    });
+  }
+
+  artistSelect.addEventListener('change', () => loadArtworksTable(artistSelect.value));
+  refreshArtistsBtn.addEventListener('click', loadArtistsIntoSelect);
+
+  artForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const artistId = artistSelect.value;
+    if (!artistId) { artOut.textContent = 'Pick an artist first.'; artOut.className = 'error'; return; }
+    const title = artTitle.value.trim();
+    if (!title) { artOut.textContent = 'Title is required.'; artOut.className = 'error'; return; }
+    const year = parseInt(artYear.value || '0', 10) || null;
+
+    try {
+      const ts = Date.now();
+      const file = artImage.files[0];
+      const image_url = file ? await uploadPublic(ARTWORKS_BUCKET, `images/${artistId}/${ts}-${slugify(title)}`, file) : null;
+
+      const { data, error } = await supa.from('artworks').insert([{
+        artist_id: artistId, title, year, description: artDesc.value, image_url, is_published: true
+      }]).select().single();
+      if (error) throw error;
+      artOut.textContent = `Artwork created ✔ — id: ${data.id}`;
+      artOut.className = 'success';
+      artForm.reset(); artPrev.style.display='none';
+      loadArtworksTable(artistId);
+    } catch (err) {
+      artOut.textContent = 'Error: ' + (err.message || err);
+      artOut.className = 'error';
+    }
+  });
+
+  // initial load
+  loadArtistsIntoSelect();
+</script>
+</body>
+</html>
