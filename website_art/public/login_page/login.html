@@ -9,15 +9,17 @@
 </head>
 <body>
   <div class="login-wrapper">
-    <form id="loginForm">
-      <img src="/logos/art_kingdom_temp.png" alt="Login Logo" class="login-logo" />
-      <input type="email" id="loginEmail" placeholder="Email" required />
-      <input type="password" id="loginPassword" placeholder="Password" required />
+    <form id="loginForm" novalidate>
+      <!-- relative path (from /public/login_page/ to /public/logos/) -->
+      <img src="../logos/art_kingdom_temp.png" alt="Art Kingdom logo" class="login-logo" />
+      <input type="email" id="loginEmail" placeholder="Email" autocomplete="username" required />
+      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
       <button type="submit">Login</button>
-      <p id="login-error" style="color:red;"></p>
+      <p id="login-error" aria-live="polite" style="color:red;"></p>
     </form>
   </div>
 
+  <!-- Supabase login logic (ESM) -->
   <script type="module" src="./login.js"></script>
 </body>
 </html>

@@ -7,95 +7,76 @@
   <title>Artist</title>
   <link rel="stylesheet" href="artist_page.css" />
 
-  <!-- Supabase keys -->
+  <!-- Supabase keys (same as search/admin) -->
   <script>
     window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
-    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+    window.SUPABASE_ANON_KEY =  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
   </script>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- UMD build (NOT type="module") -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="artist_page-wrapper" id="artistRoot">
-    <a href="../search_page/search_bar.html" class="back-btn" aria-label="Back to search page">&lt;</a>
+    <a href="../search_page/search_bar.html" class="back-btn" aria-label="Back to search page">‹</a>
 
-    <!-- Simple artist header -->
-    <header class="artist-header" style="display:flex;gap:16px;align-items:center;margin:8px 0 16px;">
-      <img id="artistAvatar" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;display:none;" />
-      <div>
-        <h1 id="artistName" style="margin:0;font-size:1.6rem;"></h1>
-        <p id="artistMeta" style="margin:.25rem 0 0;color:#666;font-size:.95rem;"></p>
-      </div>
+    <header class="artist-header">
+      <h1 id="artistName"></h1>
+      <p id="artistMeta" class="artist-meta"></p>
     </header>
-    <p id="artistBio" style="margin:0 0 20px;line-height:1.5;"></p>
+
+    <p id="artistBio" class="artist-bio"></p>
 
     <div class="gallery" aria-label="Artwork gallery">
       <div class="track" id="track"></div>
-
-      <!-- Controls -->
       <button type="button" class="nav prev" id="prev" aria-label="Previous slide">‹</button>
       <button type="button" class="nav next" id="next" aria-label="Next slide">›</button>
-
-      <!-- Dots -->
       <div class="dots" id="dots" aria-label="Slide pagination"></div>
     </div>
 
-    <!-- Dynamic description (stays here) -->
-    <p id="artwork-desc" aria-live="polite"></p>
+    <p id="artwork-desc" class="artwork-desc" aria-live="polite"></p>
   </div>
 
-  <!-- Data + slider logic -->
   <script>
     (async function () {
-      // --- fetch artist + artworks from Supabase ---
-      const params = new URLSearchParams(window.location.search);
-      const slug = params.get('slug');
-      if (!slug) {
-        document.getElementById('artistRoot').innerHTML = '<p>Missing artist slug.</p>';
-        return;
-      }
+      const root = document.getElementById('artistRoot');
+      const showError = (msg) => { root.innerHTML = `<p class="error">${msg}</p>`; };
 
+      // 0) slug from URL
+      const params = new URLSearchParams(location.search);
+      const slug = params.get('slug');
+      if (!slug) return showError('Missing artist slug in the URL.');
+
+      if (!window.supabase) return showError('Supabase JS not loaded.');
       const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
 
-      // 1) artist
+      // 1) Fetch the published artist by slug
       const { data: artist, error: artistErr } = await supa
-        .from('artists').select('*').eq('slug', slug).maybeSingle();
-      if (artistErr) {
-        console.error(artistErr);
-        document.getElementById('artistRoot').innerHTML = '<p>Error loading artist.</p>';
-        return;
-      }
-      if (!artist) {
-        document.getElementById('artistRoot').innerHTML = '<p>Artist not found.</p>';
-        return;
-      }
+        .from('artists')
+        .select('id,name,slug,bio,country,region_sub,gender,is_published')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .maybeSingle();
 
-      // Fill header
-      document.title = artist.name + ' — Artist';
-      const avatarEl = document.getElementById('artistAvatar');
-      const nameEl   = document.getElementById('artistName');
-      const metaEl   = document.getElementById('artistMeta');
-      const bioEl    = document.getElementById('artistBio');
+      if (artistErr) return showError('Error loading artist: ' + artistErr.message);
+      if (!artist)   return showError('Artist not found or unpublished.');
 
-      nameEl.textContent = artist.name || '';
-      metaEl.textContent = [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
-      bioEl.textContent  = artist.bio || '';
-      if (artist.avatar_url) {
-        avatarEl.src = artist.avatar_url;
-        avatarEl.alt = artist.name;
-        avatarEl.style.display = 'block';
-      }
+      document.title = `${artist.name} — Artist`;
+      document.getElementById('artistName').textContent = artist.name || '';
+      document.getElementById('artistMeta').textContent =
+        [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
 
-      // 2) artworks
+      // 2) Fetch this artist's published artworks
       const { data: arts, error: artsErr } = await supa
         .from('artworks')
-        .select('id,title,description,image_url,year')
+        .select('id,title,description,image_url,year,is_published,created_at')
         .eq('artist_id', artist.id)
         .eq('is_published', true)
         .order('created_at', { ascending: false });
 
-      if (artsErr) console.error(artsErr);
+      if (artsErr) console.warn('Artworks error:', artsErr.message);
 
-      const track   = document.getElementById('track');
+      // 3) Render slides
+      const track = document.getElementById('track');
       const makeFig = (a) => {
         const fig = document.createElement('figure');
         fig.className = 'slide';
@@ -103,8 +84,7 @@
         const safeTitle = a.title || 'Artwork';
         const cap = a.year ? `${safeTitle} (${a.year})` : safeTitle;
         fig.innerHTML = `
-          ${a.image_url ? `<img src="${a.image_url}" alt="${safeTitle}" loading="lazy" />`
-                        : `<img src="../sample_images/sample_img.png" alt="${safeTitle}" loading="lazy" />`}
+          <img src="${a.image_url || '../sample_images/sample_img.png'}" alt="${safeTitle}" loading="lazy" />
           <figcaption>${cap}</figcaption>
         `;
         return fig;
@@ -112,25 +92,22 @@
 
       if (arts && arts.length) {
         arts.forEach(a => track.appendChild(makeFig(a)));
-      } else if (artist.hero_image_url) {
-        // fallback to hero if no artworks yet
-        track.appendChild(makeFig({ title: artist.name, description: artist.bio, image_url: artist.hero_image_url }));
       } else {
-        // final fallback sample
-        track.appendChild(makeFig({ title: 'Sample', description: 'No artworks yet.', image_url: '../sample_images/sample_img.png' }));
+        track.appendChild(makeFig({ title: 'No artworks yet', image_url: '../sample_images/sample_img.png' }));
       }
 
-      // --- slider UI (runs after slides exist) ---
-      const slides  = Array.from(track.children);
-      const btnPrev = document.getElementById('prev');
-      const btnNext = document.getElementById('next');
-      const dotsWrap= document.getElementById('dots');
-      const descEl  = document.getElementById('artwork-desc');
+      // 4) Slider controls (CSS animates .track)
+      const slides   = Array.from(track.children);
+      const btnPrev  = document.getElementById('prev');
+      const btnNext  = document.getElementById('next');
+      const dotsWrap = document.getElementById('dots');
+      const descEl   = document.getElementById('artwork-desc');
 
       let index = 0;
       let startX = 0, currentX = 0, isDragging = false;
       const threshold = 40;
 
+      // dots
       dotsWrap.innerHTML = '';
       slides.forEach((_, i) => {
         const b = document.createElement('button');
@@ -151,21 +128,23 @@
         const slide = slides[index];
         const fromData = slide.dataset.desc;
         const fromCaption = slide.querySelector('figcaption')?.textContent?.trim();
-        if (descEl) descEl.textContent = fromData || fromCaption || '';
+        descEl.textContent = fromData || fromCaption || '';
       }
-
       function goTo(i) { index = Math.max(0, Math.min(i, slides.length - 1)); update(); }
+
       const next = () => goTo(index + 1);
       const prev = () => goTo(index - 1);
 
       btnNext.addEventListener('click', next);
       btnPrev.addEventListener('click', prev);
 
+      // keyboard
       document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowRight') next();
         if (e.key === 'ArrowLeft')  prev();
       });
 
+      // touch swipe
       track.addEventListener('touchstart', (e) => {
         isDragging = true;
         startX = e.touches[0].clientX;
@@ -185,7 +164,7 @@
       function endSwipe() {
         if (!isDragging) return;
         isDragging = false;
-        track.style.transition = 'transform 300ms ease';
+        track.style.transition = ''; // let CSS handle it
         const dx = currentX - startX;
         if (dx > threshold) prev();
         else if (dx < -threshold) next();
@@ -194,9 +173,10 @@
       track.addEventListener('touchend', endSwipe, { passive: true });
       track.addEventListener('touchcancel', endSwipe, { passive: true });
 
-      // Init
+      // init
       update();
     })();
   </script>
 </body>
 </html>
+

@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin — Art Platform</title>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-<!-- ✅ Use UMD build so window.supabase is defined -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root { --gap: 12px; }
   body { font-family: system-ui, Arial, sans-serif; margin: 24px; max-width: 1100px; }
   h1, h2 { margin: 0 0 8px; }
+  header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
   section { margin: 24px 0; padding: 16px; border: 1px solid #eee; border-radius: 12px; }
   form { display:grid; gap: var(--gap); }
   .row { display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
@@ -24,42 +24,49 @@
   img.preview { width:88px; height:88px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
   table { width:100%; border-collapse:collapse; margin-top:10px; }
   th, td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
+  td.actions { width: 180px; }
+  .btn-secondary { background:#f4f4f4; border:1px solid #ddd; }
+  .btn-danger { background:#fee; border:1px solid #f6b; color:#a00; }
+  .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #ddd; background:#fafafa; }
 </style>
 </head>
 <body>
 
 <!-- 0) KEYS -->
 <script>
-  // ⬇️ set these (same as on your search & artist pages)
   window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
   window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
-
-  // Storage bucket names
-  window.ARTIST_BUCKET   = 'artists';   // avatar & hero images
-  window.ARTWORKS_BUCKET = 'artworks';  // artwork images
+  window.ARTWORKS_BUCKET = 'artworks';
 </script>
 
-<h1>Admin</h1>
-<p class="muted">Sign in, create artists, upload images, and add artworks.</p>
+<!-- 🔒 Admin-only gate -->
+<script type="module">
+  import { requireAdmin } from "/_auth/auth-guard.js";
+  (async () => {
+    const s = await requireAdmin({ redirectIfNoSession: "/admin.html", redirectIfNotAdmin: "/search_page/search_bar.html" });
+    if (!s) return; // redirected if not admin
+    const who = document.getElementById("whoami");
+    if (who) who.textContent = s.user.email || s.user.id;
+  })();
+</script>
 
-<!-- 1) AUTH -->
-<section>
-  <h2>Sign in</h2>
-  <div id="authBox" class="stack">
-    <input id="email" type="email" placeholder="you@example.com" />
-    <button id="sendMagic">Send magic link</button>
-    <span id="authMsg" class="muted"></span>
+<header>
+  <h1>Admin</h1>
+  <div class="stack">
+    <span class="muted">Signed in as <b id="whoami"></b></span>
+    <button id="signOut" class="btn-secondary">Sign out</button>
   </div>
-  <div id="sessionBox" class="stack" style="display:none">
-    <span>Signed in as <b id="whoami"></b></span>
-    <button id="signOut">Sign out</button>
-  </div>
-</section>
+</header>
+<p class="muted">Create, edit, and delete artists & artworks. (No avatar/hero images.)</p>
 
 <!-- 2) CREATE / UPDATE ARTIST -->
 <section>
-  <h2>Create / Update Artist</h2>
+  <div class="stack" style="justify-content:space-between">
+    <h2>Create / Update Artist</h2>
+    <span id="artistMode" class="pill">Mode: Create</span>
+  </div>
   <form id="artistForm">
+    <input type="hidden" id="artistId" />
     <div class="row">
       <input id="artistName" placeholder="Name" required />
       <input id="artistSlug" placeholder="Slug (optional; auto from name)" />
@@ -82,39 +89,46 @@
         <option>South America</option>
       </select>
 
-      <!-- Country starts disabled; enabled after region is chosen -->
       <select id="artistCountry" disabled>
         <option value="">Country</option>
       </select>
     </div>
 
-    <div class="row">
-      <div>
-        <label class="muted">Avatar image</label>
-        <div class="stack">
-          <input type="file" id="avatarFile" accept="image/*" />
-          <img id="avatarPreview" class="preview" style="display:none" />
-        </div>
-      </div>
-      <div>
-        <label class="muted">Hero image</label>
-        <div class="stack">
-          <input type="file" id="heroFile" accept="image/*" />
-          <img id="heroPreview" class="preview" style="display:none" />
-        </div>
-      </div>
-    </div>
-
     <div class="stack">
-      <button type="submit">Save artist</button>
+      <button type="submit" id="artistSaveBtn">Save artist</button>
+      <button type="button" id="artistCancelBtn" class="btn-secondary" style="display:none">Cancel edit</button>
       <span id="artistOut" class="muted"></span>
     </div>
   </form>
+
+  <div id="artistsWrap">
+    <h3 style="margin-top:16px">Existing artists</h3>
+
+    <div class="stack" style="justify-content:space-between; margin-top:8px;">
+      <input id="artistSearch" placeholder="Search artists…" />
+      <div class="stack">
+        <button id="prevArtists" class="btn-secondary" type="button">Prev</button>
+        <span id="artistPageLabel" class="muted">Page 1</span>
+        <button id="nextArtists" class="btn-secondary" type="button">Next</button>
+      </div>
+    </div>
+
+    <table id="artistsTable">
+      <thead>
+        <tr><th>Name</th><th>Slug</th><th>Region</th><th>Country</th><th class="actions">Actions</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </section>
 
 <!-- 3) ARTWORKS -->
 <section>
-  <h2>Add Artwork</h2>
+  <div class="stack" style="justify-content:space-between">
+    <h2>Add / Edit Artwork</h2>
+    <span id="artMode" class="pill">Mode: Create</span>
+  </div>
+
   <div class="row">
     <select id="artistSelect">
       <option value="">Select artist…</option>
@@ -123,6 +137,7 @@
   </div>
 
   <form id="artForm" style="margin-top:12px">
+    <input type="hidden" id="artId" />
     <div class="row">
       <input id="artTitle" placeholder="Title" required />
       <input id="artYear" type="number" placeholder="Year" />
@@ -133,7 +148,8 @@
       <img id="artPreview" class="preview" style="display:none" />
     </div>
     <div class="stack">
-      <button type="submit">Create artwork</button>
+      <button type="submit" id="artSaveBtn">Create artwork</button>
+      <button type="button" id="artCancelBtn" class="btn-secondary" style="display:none">Cancel edit</button>
       <span id="artOut" class="muted"></span>
     </div>
   </form>
@@ -141,7 +157,7 @@
   <div id="artworksWrap">
     <h3 style="margin-top:16px">Existing artworks</h3>
     <table id="artworksTable">
-      <thead><tr><th>Image</th><th>Title</th><th>Year</th><th>Description</th></tr></thead>
+      <thead><tr><th>Image</th><th>Title</th><th>Year</th><th>Description</th><th class="actions">Actions</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -150,10 +166,34 @@
 <script>
   // ---------- Setup ----------
   const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
-  const ARTIST_BUCKET = window.ARTIST_BUCKET || 'artists';
   const ARTWORKS_BUCKET = window.ARTWORKS_BUCKET || 'artworks';
 
-  // Region -> Countries map (Africa + Americas)
+  async function ensureSessionOrRedirect() {
+    // This remains as a light extra check; the real admin gate happens above.
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session?.user) {
+      location.href = 'admin.html';
+      return false;
+    }
+    // 'whoami' is already set by the guard if available; keep this as a fallback.
+    const who = document.getElementById('whoami');
+    if (who && !who.textContent) who.textContent = session.user.email || session.user.id;
+    return true;
+  }
+
+  // Redirect away if user signs out
+  supa.auth.onAuthStateChange((event) => {
+    if (event === 'SIGNED_OUT') location.href = 'admin.html';
+  });
+
+  document.getElementById('signOut').onclick = async () => { await supa.auth.signOut(); };
+
+  // Helpers
+  function setStatus(el, msg, cls='muted'){ el.textContent = msg; el.className = cls; }
+  function slugify(s){ return (s||'').toLowerCase().normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+
+  // Region data
   const REGION_COUNTRIES = {
     "North Africa": ["Algeria","Egypt","Libya","Morocco","Sudan","Tunisia"],
     "West Africa": ["Benin","Burkina Faso","Cabo Verde","Côte d’Ivoire","Gambia","Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Mauritania","Niger","Nigeria","Senegal","Sierra Leone","Togo"],
@@ -165,8 +205,6 @@
     "Caribbean": ["Antigua and Barbuda","Bahamas","Barbados","Cuba","Dominica","Dominican Republic","Grenada","Haiti","Jamaica","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Trinidad and Tobago"],
     "South America": ["Argentina","Bolivia","Brazil","Chile","Colombia","Ecuador","Guyana","Paraguay","Peru","Suriname","Uruguay","Venezuela"]
   };
-
-  // -------- Robust Region → Country helpers --------
   const REGION_ALIASES = {
     "north africa":"North Africa","west africa":"West Africa","east africa":"East Africa",
     "central africa":"Central Africa","southern africa":"Southern Africa",
@@ -183,46 +221,21 @@
     list.forEach(c => { const opt=document.createElement('option'); opt.value=c; opt.textContent=c; selectEl.appendChild(opt); });
     selectEl.disabled = false;
   }
-
-  // Basic helpers
-  function slugify(s){ return (s||'').toLowerCase().normalize('NFKD')
-    .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
-
-  async function uploadPublic(bucket, key, file){
-    if(!file) return null;
-    const { error } = await supa.storage.from(bucket).upload(key, file, { upsert: true });
-    if(error) throw error;
-    return supa.storage.from(bucket).getPublicUrl(key).data.publicUrl;
+  function storageKeyFromPublicUrl(url){
+    try{
+      const marker = `/storage/v1/object/public/${ARTWORKS_BUCKET}/`;
+      const idx = url.indexOf(marker);
+      if(idx === -1) return null;
+      return url.substring(idx + marker.length);
+    }catch{ return null; }
+  }
+  async function requireAuth() {
+    const { data: { session } } = await supa.auth.getSession();
+    if (!session?.user) throw new Error('Not signed in.');
+    return session.user;
   }
 
-  // ---------- AUTH ----------
-  const authBox = document.getElementById('authBox');
-  const sessionBox = document.getElementById('sessionBox');
-  const whoami = document.getElementById('whoami');
-  const authMsg = document.getElementById('authMsg');
-
-  async function refreshSessionUI(){
-    const { data: { session} } = await supa.auth.getSession();
-    if (session?.user) {
-      authBox.style.display = 'none';
-      sessionBox.style.display = 'flex';
-      whoami.textContent = session.user.email || session.user.id;
-    } else {
-      authBox.style.display = 'flex';
-      sessionBox.style.display = 'none';
-    }
-  }
-  document.getElementById('sendMagic').onclick = async () => {
-    const email = document.getElementById('email').value.trim();
-    const { error } = await supa.auth.signInWithOtp({ email });
-    authMsg.textContent = error ? error.message : 'Magic link sent. Check your email.';
-    authMsg.className = error ? 'error' : 'success';
-  };
-  document.getElementById('signOut').onclick = async () => { await supa.auth.signOut(); refreshSessionUI(); };
-  supa.auth.onAuthStateChange(() => refreshSessionUI());
-  refreshSessionUI();
-
-  // ---------- ARTISTS ----------
+  // ---------- Artist UI refs ----------
   const artistForm = document.getElementById('artistForm');
   const artistOut  = document.getElementById('artistOut');
   const nameEl = document.getElementById('artistName');
@@ -231,30 +244,49 @@
   const genderEl = document.getElementById('artistGender');
   const regionEl = document.getElementById('artistRegion');
   const countryEl= document.getElementById('artistCountry');
-  const avatarFile = document.getElementById('avatarFile');
-  const heroFile   = document.getElementById('heroFile');
-  const avatarPrev = document.getElementById('avatarPreview');
-  const heroPrev   = document.getElementById('heroPreview');
+  const artistIdEl = document.getElementById('artistId');
+  const artistMode = document.getElementById('artistMode');
+  const artistCancelBtn = document.getElementById('artistCancelBtn');
+  const artistSaveBtn = document.getElementById('artistSaveBtn');
+  const artistsTableBody = document.querySelector('#artistsTable tbody');
 
-  // Populate when region changes
-  regionEl.addEventListener('change', () => {
-    populateCountries(regionEl.value, countryEl);
-  });
+  // pagination + search controls
+  const artistSearch = document.getElementById('artistSearch');
+  const prevArtists = document.getElementById('prevArtists');
+  const nextArtists = document.getElementById('nextArtists');
+  const artistPageLabel = document.getElementById('artistPageLabel');
+  let artistPage = 1;
+  const artistPageSize = 20;
+  let artistHasMore = false;
 
-  // If editing and Region is already set, populate on load
-  if (regionEl.value) {
-    populateCountries(regionEl.value, countryEl);
+  regionEl.addEventListener('change', () => populateCountries(regionEl.value, countryEl));
+  if (regionEl.value) populateCountries(regionEl.value, countryEl);
+
+  function setArtistModeCreate(){
+    artistIdEl.value = '';
+    artistMode.textContent = 'Mode: Create';
+    artistSaveBtn.textContent = 'Save artist';
+    artistCancelBtn.style.display = 'none';
+    setStatus(artistOut,'');
+    artistForm.reset();
+    resetCountrySelect(countryEl);
   }
+  function setArtistModeEdit(row){
+    artistIdEl.value = row.id;
+    nameEl.value = row.name || '';
+    slugEl.value = row.slug || '';
+    bioEl.value = row.bio || '';
+    genderEl.value = row.gender || '';
+    regionEl.value = row.region_sub || '';
+    populateCountries(regionEl.value, countryEl);
+    countryEl.value = row.country || '';
+    artistMode.textContent = 'Mode: Edit';
+    artistSaveBtn.textContent = 'Update artist';
+    artistCancelBtn.style.display = 'inline-block';
+    setStatus(artistOut, `Editing artist id ${row.id}`, 'muted');
+  }
+  artistCancelBtn.onclick = () => setArtistModeCreate();
 
-  // Other listeners
-  avatarFile.addEventListener('change', () => {
-    if (avatarFile.files[0]) { avatarPrev.src = URL.createObjectURL(avatarFile.files[0]); avatarPrev.style.display='block'; }
-  });
-  heroFile.addEventListener('change', () => {
-    if (heroFile.files[0]) { heroPrev.src = URL.createObjectURL(heroFile.files[0]); heroPrev.style.display='block'; }
-  });
-
-  // Submit handler
   artistForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const name = nameEl.value.trim();
@@ -262,9 +294,9 @@
     const slug = (slugEl.value.trim() || slugify(name));
 
     try {
-      const ts = Date.now();
-      const avatar_url = avatarFile.files[0] ? await uploadPublic(ARTIST_BUCKET, `avatars/${slug}-${ts}`, avatarFile.files[0]) : null;
-      const hero_image_url = heroFile.files[0] ? await uploadPublic(ARTIST_BUCKET, `heroes/${slug}-${ts}`, heroFile.files[0]) : null;
+      artistSaveBtn.disabled = true;
+      setStatus(artistOut, 'Checking auth…');
+      await requireAuth();
 
       const payload = {
         name, slug,
@@ -274,26 +306,91 @@
         country: countryEl.value || null,
         is_published: true
       };
-      if (avatar_url) payload.avatar_url = avatar_url;
-      if (hero_image_url) payload.hero_image_url = hero_image_url;
 
-      const { data, error } = await supa
-        .from('artists')
-        .upsert(payload, { onConflict: 'slug' })
-        .select()
-        .single();
+      if(artistIdEl.value){
+        setStatus(artistOut, 'Updating artist row…');
+        await supa.from('artists').update(payload).eq('id', artistIdEl.value).throwOnError();
+        setStatus(artistOut, `Updated ✔`, 'success');
+      } else {
+        setStatus(artistOut, 'Saving artist row…');
+        await supa.from('artists').upsert(payload, { onConflict: 'slug' }).throwOnError();
+        setStatus(artistOut, `Saved ✔`, 'success');
+      }
 
-      if (error) throw error;
-      artistOut.textContent = `Saved ✔ — id: ${data.id}, slug: ${data.slug}`;
-      artistOut.className = 'success';
-      loadArtistsIntoSelect(); // refresh dropdown
+      await loadArtistsList(artistPage);
+      await loadArtistsIntoSelect();
+      setArtistModeCreate();
     } catch (err) {
-      artistOut.textContent = 'Error: ' + (err.message || err);
-      artistOut.className = 'error';
+      setStatus(artistOut, 'Error: ' + (err?.message || err), 'error');
+    } finally {
+      artistSaveBtn.disabled = false;
     }
   });
 
-  // ---------- ARTWORKS ----------
+  async function deleteArtist(id){
+    try{
+      await requireAuth();
+      const { data: arts } = await supa.from('artworks').select('id').eq('artist_id', id).limit(1);
+      if(arts && arts.length){
+        const ok = confirm('This artist has artworks. If your DB is NOT set to ON DELETE CASCADE, delete will fail.\nProceed?');
+        if(!ok) return;
+      }
+      await supa.from('artists').delete().eq('id', id).throwOnError();
+      await loadArtistsList(1);
+      await loadArtistsIntoSelect();
+      if(artistIdEl.value === String(id)) setArtistModeCreate();
+      alert('Artist deleted.');
+    }catch(err){
+      alert('Delete failed: ' + (err?.message || err));
+    }
+  }
+
+  async function loadArtistsList(page = 1){
+    const from = (page - 1) * artistPageSize;
+    const to   = from + artistPageSize;
+    let q = supa.from('artists')
+      .select('id,name,slug,region_sub,country,bio,gender', { count: 'exact' })
+      .eq('is_published', true);
+
+    const term = (artistSearch.value || '').trim();
+    if (term) q = q.or(`name.ilike.%${term}%,slug.ilike.%${term}%`);
+
+    q = q.order('name', { ascending: true }).range(from, to);
+    const { data, error, count } = await q;
+    if (error) { console.error('loadArtistsList error:', error); return; }
+
+    let rows = data || [];
+    artistHasMore = rows.length > artistPageSize;
+    if (artistHasMore) rows = rows.slice(0, artistPageSize);
+
+    artistsTableBody.innerHTML = '';
+    rows.forEach(a => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${a.name || ''}</td>
+        <td>${a.slug || ''}</td>
+        <td>${a.region_sub || ''}</td>
+        <td>${a.country || ''}</td>
+        <td class="actions">
+          <button type="button" data-action="edit" class="btn-secondary" data-id="${a.id}">Edit</button>
+          <button type="button" data-action="delete" class="btn-danger" data-id="${a.id}">Delete</button>
+        </td>
+      `;
+      tr.querySelector('[data-action="edit"]').onclick = () => setArtistModeEdit(a);
+      tr.querySelector('[data-action="delete"]').onclick = () => deleteArtist(a.id);
+      artistsTableBody.appendChild(tr);
+    });
+
+    artistPage = page;
+    artistPageLabel.textContent = `Page ${artistPage}${(typeof count === 'number') ? ` • ${count} total` : ''}`;
+    prevArtists.disabled = artistPage === 1;
+    nextArtists.disabled = !artistHasMore;
+  }
+  prevArtists.onclick = () => { if (artistPage > 1) loadArtistsList(artistPage - 1); };
+  nextArtists.onclick = () => { if (artistHasMore) loadArtistsList(artistPage + 1); };
+  artistSearch.addEventListener('input', () => loadArtistsList(1));
+
+  // ---------- Artworks ----------
   const artistSelect = document.getElementById('artistSelect');
   const refreshArtistsBtn = document.getElementById('refreshArtists');
   const artForm = document.getElementById('artForm');
@@ -303,11 +400,51 @@
   const artImage = document.getElementById('artImage');
   const artPrev  = document.getElementById('artPreview');
   const artOut   = document.getElementById('artOut');
+  const artIdEl  = document.getElementById('artId');
+  const artMode  = document.getElementById('artMode');
+  const artCancelBtn = document.getElementById('artCancelBtn');
+  const artSaveBtn   = document.getElementById('artSaveBtn');
   const artworksTableBody = document.querySelector('#artworksTable tbody');
 
   artImage.addEventListener('change', () => {
     if (artImage.files[0]) { artPrev.src = URL.createObjectURL(artImage.files[0]); artPrev.style.display='block'; }
   });
+
+  function setArtModeCreate(){
+    artIdEl.value = '';
+    artMode.textContent = 'Mode: Create';
+    artSaveBtn.textContent = 'Create artwork';
+    artCancelBtn.style.display = 'none';
+    artForm.reset(); artPrev.style.display='none';
+    setStatus(artOut,'');
+  }
+  function setArtModeEdit(row){
+    artIdEl.value = row.id;
+    artTitle.value = row.title || '';
+    artYear.value = row.year || '';
+    artDesc.value = row.description || '';
+    if(row.image_url){ artPrev.src = row.image_url; artPrev.style.display='block'; } else { artPrev.style.display='none'; }
+    artMode.textContent = 'Mode: Edit';
+    artSaveBtn.textContent = 'Update artwork';
+    artCancelBtn.style.display = 'inline-block';
+    setStatus(artOut, `Editing artwork id ${row.id}`, 'muted');
+  }
+  artCancelBtn.onclick = () => setArtModeCreate();
+
+  async function uploadArtworkImage(artistId, title, file){
+    if(!file) return null;
+    await requireAuth();
+    const ts = Date.now();
+    const key = `images/${artistId}/${ts}-${slugify(title)}`;
+    const { error } = await supa.storage.from(ARTWORKS_BUCKET).upload(key, file, { upsert: true });
+    if (error) throw error;
+    return supa.storage.from(ARTWORKS_BUCKET).getPublicUrl(key).data.publicUrl;
+  }
+  async function removeArtworkImage(publicUrl){
+    const key = storageKeyFromPublicUrl(publicUrl || '');
+    if(!key) return;
+    await supa.storage.from(ARTWORKS_BUCKET).remove([key]);
+  }
 
   async function loadArtistsIntoSelect(){
     const { data, error } = await supa.from('artists')
@@ -315,7 +452,7 @@
       .eq('is_published', true)
       .order('name', { ascending: true });
     artistSelect.innerHTML = '<option value="">Select artist…</option>';
-    if (error) return;
+    if (error) { console.error('loadArtistsIntoSelect error:', error); return; }
     (data || []).forEach(a => {
       const opt = document.createElement('option');
       opt.value = a.id;
@@ -328,10 +465,10 @@
     artworksTableBody.innerHTML = '';
     if (!artistId) return;
     const { data, error } = await supa.from('artworks')
-      .select('id,title,year,description,image_url')
+      .select('id,title,year,description,image_url,artist_id')
       .eq('artist_id', artistId)
       .order('created_at', { ascending: false });
-    if (error) return;
+    if (error) { console.error('loadArtworksTable error:', error); return; }
     (data || []).forEach(a => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
@@ -339,43 +476,92 @@
         <td>${a.title || ''}</td>
         <td>${a.year || ''}</td>
         <td>${a.description ? a.description.substring(0,140)+(a.description.length>140?'…':'') : ''}</td>
+        <td class="actions">
+          <button type="button" class="btn-secondary" data-action="edit" data-id="${a.id}">Edit</button>
+          <button type="button" class="btn-danger" data-action="delete" data-id="${a.id}">Delete</button>
+        </td>
       `;
+      tr.querySelector('[data-action="edit"]').onclick = () => setArtModeEdit(a);
+      tr.querySelector('[data-action="delete"]').onclick = () => deleteArtwork(a);
       artworksTableBody.appendChild(tr);
     });
   }
 
-  artistSelect.addEventListener('change', () => loadArtworksTable(artistSelect.value));
-  refreshArtistsBtn.addEventListener('click', loadArtistsIntoSelect);
+  artistSelect.addEventListener('change', () => {
+    setArtModeCreate();
+    loadArtworksTable(artistSelect.value);
+  });
+  refreshArtistsBtn.addEventListener('click', async () => {
+    await loadArtistsIntoSelect();
+    if(artistSelect.value) await loadArtworksTable(artistSelect.value);
+  });
 
   artForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const artistId = artistSelect.value;
-    if (!artistId) { artOut.textContent = 'Pick an artist first.'; artOut.className = 'error'; return; }
+    if (!artistId) { setStatus(artOut, 'Pick an artist first.', 'error'); return; }
     const title = artTitle.value.trim();
-    if (!title) { artOut.textContent = 'Title is required.'; artOut.className = 'error'; return; }
+    if (!title) { setStatus(artOut, 'Title is required.', 'error'); return; }
     const year = parseInt(artYear.value || '0', 10) || null;
 
     try {
-      const ts = Date.now();
-      const file = artImage.files[0];
-      const image_url = file ? await uploadPublic(ARTWORKS_BUCKET, `images/${artistId}/${ts}-${slugify(title)}`, file) : null;
+      artSaveBtn.disabled = true;
+      setStatus(artOut, 'Checking auth…');
+      await requireAuth();
 
-      const { data, error } = await supa.from('artworks').insert([{
-        artist_id: artistId, title, year, description: artDesc.value, image_url, is_published: true
-      }]).select().single();
-      if (error) throw error;
-      artOut.textContent = `Artwork created ✔ — id: ${data.id}`;
-      artOut.className = 'success';
+      const file = artImage.files[0];
+      let image_url = null;
+
+      if(artIdEl.value){
+        const { data: existing } = await supa.from('artworks').select('image_url').eq('id', artIdEl.value).single();
+        if(file){ image_url = await uploadArtworkImage(artistId, title, file); }
+        const updatePayload = { title, year, description: artDesc.value, is_published: true };
+        if(image_url) updatePayload.image_url = image_url;
+
+        await supa.from('artworks').update(updatePayload).eq('id', artIdEl.value).throwOnError();
+        if(image_url && existing?.image_url){ await removeArtworkImage(existing.image_url); }
+        setStatus(artOut, `Artwork updated ✔`, 'success');
+      } else {
+        if(file){ image_url = await uploadArtworkImage(artistId, title, file); }
+        await supa.from('artworks').insert([{ artist_id: artistId, title, year, description: artDesc.value, image_url, is_published: true }]).throwOnError();
+        setStatus(artOut, `Artwork created ✔`, 'success');
+      }
+
       artForm.reset(); artPrev.style.display='none';
+      setArtModeCreate();
       loadArtworksTable(artistId);
     } catch (err) {
-      artOut.textContent = 'Error: ' + (err.message || err);
-      artOut.className = 'error';
+      setStatus(artOut, 'Error: ' + (err?.message || err), 'error');
+    } finally {
+      artSaveBtn.disabled = false;
     }
   });
 
-  // initial load
-  loadArtistsIntoSelect();
+  async function deleteArtwork(artRow){
+    const ok = confirm(`Delete artwork "${artRow.title}"? This cannot be undone.`);
+    if(!ok) return;
+    try{
+      await requireAuth();
+      await supa.from('artworks').delete().eq('id', artRow.id).throwOnError();
+      if(artRow.image_url){ await removeArtworkImage(artRow.image_url); }
+      if(artIdEl.value === String(artRow.id)) setArtModeCreate();
+      await loadArtworksTable(artRow.artist_id);
+      alert('Artwork deleted.');
+    }catch(err){
+      alert('Delete failed: ' + (err?.message || err));
+    }
+  }
+
+  // ---------- Boot ----------
+  (async function init(){
+    const ok = await ensureSessionOrRedirect();
+    if(!ok) return;
+    // Region select hookup
+    regionEl.addEventListener('change', () => populateCountries(regionEl.value, countryEl));
+    // Load pages
+    await loadArtistsList(1);
+    await loadArtistsIntoSelect();
+  })();
 </script>
 </body>
 </html>

@@ -41,18 +41,42 @@ body {
   gap: 20px;
 }
 
+/* Cards */
 .artist-card {
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
   overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform .12s ease, box-shadow .12s ease;
 }
 
+.artist-card:hover,
+.artist-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.08);
+  outline: none;
+}
+
+/* Image area: square tiles using aspect-ratio */
 .art-image {
-  background: #ddd;          /* placeholder */
-  height: 180px;
+  background: #ddd;
+  aspect-ratio: 1 / 1; /* responsive square */
+  height: auto;
 }
 
+/* Rotating image fills box + fades smoothly */
+.art-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity .25s ease;
+}
+
+/* Text */
 .artist-info {
   padding: 15px;
 }
@@ -66,6 +90,13 @@ body {
   margin: 0;
   font-size: 0.95rem;
   color: #555;
+
+  /* Clamp to two lines to keep cards tidy */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 /* Pagination */
@@ -93,4 +124,12 @@ body {
 
 .pagination span {
   font-size: 1rem;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .art-image img,
+  .artist-card {
+    transition: none;
+  }
 }

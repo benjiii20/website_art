@@ -1,45 +1,54 @@
-// public/login_page/login.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+// /public/login_page/login.js
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyD8Hti_jSPVc4EQfypnue9xjtdDFSl5s8s",
-  authDomain: "art-kingdom.firebaseapp.com",
-  projectId: "art-kingdom",
-  messagingSenderId: "1027676825354",
-  appId: "1:1027676825354:web:071590312ebd600f603cf3",
-  measurementId: "G-E060BR452K"
-};
+// 🔧 Supabase project config
+const SUPABASE_URL = "https://jhzlxmomyypgtkuwdvzn.supabase.co";
+const SUPABASE_ANON_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0";
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 
 const loginForm = document.getElementById("loginForm");
 
 loginForm.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value;
   const errEl = document.getElementById("login-error");
   errEl.textContent = "";
 
   try {
-    await signInWithEmailAndPassword(auth, email, password);
-    window.location.href = "/search_page/search_bar.html";
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+
+    // Success → redirect (relative path)
+    window.location.href = "../search_page/search_bar.html";
   } catch (err) {
     errEl.textContent = friendly(err);
   }
 });
 
+// Map Supabase errors to user-friendly messages
 function friendly(err) {
-  const c = err?.code || "";
-  if (c.includes("user-disabled")) return "Your account is disabled. Please contact the admin.";
-  if (c.includes("invalid-credential") || c.includes("invalid-login-credentials"))
+  const msg = (err?.message || "").toLowerCase();
+  const status = err?.status;
+
+  if (status === 429 || msg.includes("rate limit")) {
+    return "Too many attempts. Please wait and try again.";
+  }
+  if (msg.includes("invalid login credentials")) {
     return "Email or password is incorrect.";
-  if (c.includes("too-many-requests")) return "Too many attempts. Please wait and try again.";
-  if (c.includes("network-request-failed")) return "Network error. Check your connection.";
-  if (c.includes("invalid-email")) return "Enter a valid email address.";
-  if (c.includes("wrong-password") || c.includes("user-not-found"))
-    return "Email or password is incorrect.";
-  return err.message || "Something went wrong.";
+  }
+  if (msg.includes("email not confirmed") || msg.includes("email not verified")) {
+    return "Please confirm your email before signing in.";
+  }
+  if (msg.includes("invalid email")) {
+    return "Enter a valid email address.";
+  }
+  if (msg.includes("network")) {
+    return "Network error. Check your connection.";
+  }
+  return err?.message || "Something went wrong.";
 }

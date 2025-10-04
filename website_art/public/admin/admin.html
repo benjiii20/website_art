@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sign in — Art Platform Admin</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root { --gap:12px; }
+  /* Center the card in the middle of the screen */
+  body {
+    font-family: system-ui, Arial, sans-serif;
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #fafafa;
+    padding: 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 420px;
+    border:1px solid #eee;
+    border-radius:16px;
+    padding:24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    background: #fff;
+  }
+  h1 { margin:0 0 8px; }
+  p.muted { color:#666; margin-top:0; }
+  form { display:grid; gap: var(--gap); margin-top: 12px;}
+  input, button { padding:12px; font-size:14px; }
+  button { cursor:pointer; }
+  .muted { color:#666; font-size:12px; }
+  .success { color:#137333; }
+  .error { color:#b80606; }
+</style>
+</head>
+<body>
+<script>
+  // ---- Supabase keys (same as your app) ----
+  window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+  const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+  async function isAdmin(userId){
+    if(!userId) return false;
+    const { data, error } = await supa
+      .from('admins')
+      .select('user_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+    // If there's no row, user is not an admin
+    return !!data && !error;
+  }
+
+  // If already signed in, only redirect if they're an admin
+  (async () => {
+    const { data: { session } } = await supa.auth.getSession();
+    if (session?.user) {
+      const ok = await isAdmin(session.user.id);
+      if (ok) {
+        location.href = 'index.html';
+      } else {
+        // Non-admin was signed in: sign out and stay on login with a notice
+        await supa.auth.signOut();
+        const msg = document.getElementById('msg');
+        if (msg) { msg.textContent = 'Access restricted: admin account required.'; msg.className = 'error'; }
+      }
+    }
+  })();
+</script>
+
+<div class="card">
+  <h1>Admin Sign in</h1>
+  <p class="muted">Email + password only. No sign up here.</p>
+
+  <form id="loginForm" novalidate>
+    <input id="email" type="email" placeholder="you@example.com" autocomplete="username" required />
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" required />
+    <button id="submitBtn" type="submit">Sign in</button>
+    <span id="msg" class="muted" aria-live="polite"></span>
+  </form>
+</div>
+
+<script>
+  const form = document.getElementById('loginForm');
+  const msg  = document.getElementById('msg');
+  const btn  = document.getElementById('submitBtn');
+
+  function setStatus(text, cls='muted'){ msg.textContent = text; msg.className = cls; }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      btn.disabled = true;
+      setStatus('Signing in…');
+
+      const { data: signInData, error } = await supa.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+
+      // Admin gate: only allow admins through
+      const uid = signInData.user.id;
+      const { data: adminRow, error: adminErr } = await supa
+        .from('admins')
+        .select('user_id')
+        .eq('user_id', uid)
+        .maybeSingle();
+
+      if (adminErr || !adminRow) {
+        // Not an admin: sign out and show message
+        await supa.auth.signOut();
+        setStatus('Access restricted: admin account required.', 'error');
+        btn.disabled = false;
+        return;
+      }
+
+      // Admin OK
+      setStatus('Signed in ✔ Redirecting…', 'success');
+      location.href = 'index.html';
+    } catch (err) {
+      setStatus(err?.message || 'Something went wrong.', 'error');
+      btn.disabled = false;
+    }
+  });
+
+  // Optional: if user signs out from another tab, keep them on this page
+  supa.auth.onAuthStateChange((evt) => {
+    if (evt === 'SIGNED_OUT') {
+      // no redirect needed; this is the login page
+    }
+  });
+</script>
+</body>
+</html>
+
+
