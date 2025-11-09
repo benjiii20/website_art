@@ -1,38 +1,61 @@
+
 /* ===== Tokens ===== */
 :root {
-  --page-max: 920px;
+  --page-max: 980px;
   --gap: 24px;
-  --radius: 0px;
-  --border: 2px solid #1e293b;
-  --ink: #0f172a;
-  --muted: #475569;
-  --bg: #f8fafc;
-  --box-bg: #ffffff;
+  --radius: 14px;
+  --line: #242424;              /* hairline borders */
+  --ink: #f0dc08;               /* primary text */
+  --muted: #fbf708;             /* secondary text */
+  --bg: #0a0a0a;                /* page background */
+  --box-bg: #111214;            /* card/stage background */
 
   /* Frame controls */
-  --stage-max: 960px;      /* cap the frame width */
-  --stage-ratio: 16/9;     /* keep a consistent aspect ratio */
+  --stage-max: 1120px;          /* cap the frame width */
+  --stage-ratio: 16/9;          /* frame aspect ratio */
 
-  /* Slider scale tokens (kept for dots/arrows sizing if you need) */
+  /* Slider scale tokens */
   --scale: 2.0;
   --base-card: 360px;
   --base-img-h: 300px;
-  --base-radius: 10px;
   --base-cap: 0.85rem;
 }
 
-@media (max-width: 1199px) { :root { --scale: 2; } }
-@media (max-width: 899px)  { :root { --scale: 1.6; } }
-@media (max-width: 599px)  { :root { --scale: 1.2; } }
+/* 1) Responsive frame ratio */
+:root { --stage-ratio: 16/9; }
+@media (min-width: 1600px) { :root { --stage-ratio: 21/9; } }
+@media (max-width: 1024px) { :root { --stage-ratio: 4/3; } }
+@media (max-width: 640px)  { :root { --stage-ratio: 1/1; } }
 
-/* ===== Base ===== */
-*, *::before, *::after { box-sizing: border-box; }
-html, body { height: 100%; }
+/* 2) Frame uses aspect-ratio and stays centered */
+.gallery {
+  width: min(92vw, var(--stage-max));
+  margin: 22px auto;
+  aspect-ratio: var(--stage-ratio);
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--box-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  box-shadow: 0 14px 40px rgba(0,0,0,.45);
+}
+
+/* 3) Images fill and stay visually centered */
+.slide img { width: 100%; height: 100%; object-fit:contain; object-position: center; }
+
+/* 4) Arrows sit inside the frame (no negative offsets) */
+.nav { top: 50%; transform: translateY(-50%); }
+.prev { left: .75rem; }
+.next { right: .75rem; }
+
+/* 5) Prevent layout nudge on ultrawide due to transforms */
+html, body { overflow-x: hidden; }
+
 body {
   margin: 0;
-  font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font: 16px/1.7 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--ink);
-  background: var(--bg);
+  background: radial-gradient(1200px 600px at 20% 10%, #121317 0%, #0a0a0a 48%, #050506 100%);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 
 /* Page wrapper */
@@ -42,22 +65,35 @@ body {
   padding: 0 20px 40px;
 }
 
-/* ===== Framed gallery (matches the “stage” look) ===== */
+/* Header */
+.artist-header { margin: 1rem 0 1.25rem; }
+.artist-title {
+  margin: 0 0 .25rem 0;
+  font-family: "Playfair Display", serif;
+  font-size: clamp(1.8rem, 1.2rem + 2.2vw, 3rem);
+  letter-spacing: .01em;
+  color: #fff;
+}
+.artist-meta { margin: 0; color: var(--muted); }
+.artist-bio { color: var(--muted); max-width: 72ch; }
+
+/* ===== Framed gallery (NOIR stage) ===== */
 .gallery {
   position: relative;
   width: min(92vw, var(--stage-max));
-  margin: 0 auto;                 /* centered */
+  margin: 22px auto;                 /* centered */
   aspect-ratio: var(--stage-ratio);
-  background: var(--box-bg);
-  border: var(--border);
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--box-bg);
+  border: 1px solid var(--line);
   border-radius: var(--radius);
   overflow: hidden;               /* hides overflow like the screenshot */
+  box-shadow: 0 14px 40px rgba(0,0,0,.45);
 }
 
 /* Track fills the frame so slides/images can stretch to it */
 .track {
   display: flex;
-  height: 100%;                   /* key: make slides match frame height */
+  height: 100%;
   transition: transform 300ms ease;
   touch-action: pan-y;
 }
@@ -77,11 +113,11 @@ body {
 .slide img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   background: #000;
 }
 
-/* Optional caption overlay */
+/* Caption overlay */
 .slide figcaption {
   position: absolute;
   left: 0; right: 0; bottom: 0;
@@ -96,85 +132,61 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  border: none;
-  background: transparent;          /* transparent circle */
-  color: #fff;                      /* arrow color */
-  width: calc(32px * var(--scale));
-  height: calc(32px * var(--scale));
-  font-size: calc(1.8rem * var(--scale)); /* make arrow bigger if you want */
+  border: 1px solid var(--line);
+  background: rgba(10,10,10,.6);      /* subtle glassy button */
+  color: #fff;
+  width: calc(40px * var(--scale));
+  height: calc(40px * var(--scale));
+  font-size: calc(1.4rem * var(--scale));
   display: grid;
   place-items: center;
   cursor: pointer;
   z-index: 2;
+  border-radius: 999px;
+  backdrop-filter: blur(2px);
 }
+.nav:hover { background: rgba(255,255,255,.08); }
+.nav:disabled { opacity: .45; cursor: default; }
 
-.nav:hover {
-  color: #facc15;   /* example: yellow on hover, or pick your accent */
-}
-
+/* Pull arrows slightly outside the frame on wide screens */
 .prev { left: calc(-2.5rem * var(--scale)); }
 .next { right: calc(-2.5rem * var(--scale)); }
-
+@media (max-width: 900px) { .prev { left: .5rem; } .next { right: .5rem; } }
 
 /* Dots */
 .dots {
   position: absolute;
-  left: 0; right: 0; bottom: .4rem;
-  display: flex; gap: .35rem; justify-content: center;
+  left: 0; right: 0; bottom: .6rem;
+  display: flex; gap: .4rem; justify-content: center;
 }
 .dots button {
   width: calc(8px * var(--scale));
   height: calc(8px * var(--scale));
   border-radius: 999px;
   border: 0;
-  background: rgba(255,255,255,.5);
+  background: rgba(255,255,255,.35);
   cursor: pointer;
 }
 .dots button[aria-current="true"] { background: #fff; }
+
+/* Back button */
 .back-btn {
-  display: inline-flex;
-  align-items:center;
-  gap: 0.4rem;
-  font-size: 2rem;
-  font-weight: 500;
-  color: var(--muted);
-  text-decoration: none;
-  margin-bottom: 1rem;
-  transition: color 0.2s ease;
+  position: fixed; top: 1rem; left: 1rem; z-index: 1000;
+  display: grid; place-items: center;
+  width: 2.5rem; height: 2.5rem; font-size: 1.2rem; font-weight: 600; color: var(--ink);
+  background: rgba(255,255,255,.02);
+  border: 1px solid var(--line);
+  border-radius: 999px; text-decoration: none;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
 }
-
-.back-btn {
-  position: fixed;
-  top: 1rem;
-  left: 1rem;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
-
-  font-size: 1.4rem;
-  font-weight:500;
-  color: var(--ink);
-
-  background: transparent;
-  border: var(--border);
-  border-radius: 999px;   /* circular */
-  text-decoration: none;
-
-  transition: background 0.2s ease, color 0.2s ease;
-  z-index: 1000; /* make sure it's above the gallery */
-}
-
-.back-btn:hover {
-  background: var(--ink);
-  color: #fff;
-}
+.back-btn:hover { background: #0f0f12; color: #fff; border-color: #2f2f2f; }
 
 /* Description under the frame — same width as the gallery */
 #artwork-desc {
   width: min(92vw, var(--stage-max));
-  margin: 20px auto 0;
+  margin: 16px auto 0;
   color: var(--muted);
 }
+
+/* Errors */
+.error { color: #ff6b6b; background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.25); padding: .75rem 1rem; border-radius: 10px; }

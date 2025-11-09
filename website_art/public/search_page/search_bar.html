@@ -1,10 +1,15 @@
-<!-- public/search_page/search_bar.html -->
+<!-- public/search_page/search_bar.html — Khaya NOIR ready -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Artist Search</title>
+
+  <!-- Fonts for NOIR aesthetic -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="search_styles.css" />
 
   <!-- Supabase keys (okay for client; RLS protects writes) -->
@@ -26,10 +31,11 @@
         type="text"
         placeholder="Name, region, country"
         class="search-input"
+        aria-label="Search artists by name, region, or country"
       />
 
       <div class="filters">
-        <select id="filterRegion">
+        <select id="filterRegion" aria-label="Filter by region">
           <option value="">Region</option>
           <!-- Africa -->
           <option>North Africa</option>
@@ -44,11 +50,11 @@
           <option>South America</option>
         </select>
 
-        <select id="filterCountry" disabled>
+        <select id="filterCountry" disabled aria-label="Filter by country">
           <option value="">Country</option>
         </select>
 
-        <select id="filterGender">
+        <select id="filterGender" aria-label="Filter by gender">
           <option value="">Gender</option>
           <option value="male">Male</option>
           <option value="female">Female</option>
@@ -59,14 +65,17 @@
       </div>
     </div>
 
-    <!-- Results grid (matches your CSS) -->
+    <!-- Screen-reader live status (optional) -->
+    <div id="resultsStatus" aria-live="polite" style="position:absolute;left:-9999px;"></div>
+
+    <!-- Results grid (matches CSS) -->
     <div class="results-grid"></div>
 
     <!-- Pagination -->
     <div class="pagination">
-      <button disabled>‹</button>
+      <button disabled aria-label="Previous page">‹</button>
       <span>1 of 1</span>
-      <button>›</button>
+      <button aria-label="Next page">›</button>
     </div>
   </div>
 </body>

@@ -1,10 +1,15 @@
-<!-- public/artist_page/artist_page.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Artist</title>
+
+  <!-- NOIR fonts -->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="artist_page.css" />
 
   <!-- Supabase keys (same as search/admin) -->
@@ -20,7 +25,7 @@
     <a href="../search_page/search_bar.html" class="back-btn" aria-label="Back to search page">‹</a>
 
     <header class="artist-header">
-      <h1 id="artistName"></h1>
+      <h1 id="artistName" class="artist-title"></h1>
       <p id="artistMeta" class="artist-meta"></p>
     </header>
 
@@ -96,7 +101,7 @@
         track.appendChild(makeFig({ title: 'No artworks yet', image_url: '../sample_images/sample_img.png' }));
       }
 
-      // 4) Slider controls (CSS animates .track)
+      // 4) Slider controls
       const slides   = Array.from(track.children);
       const btnPrev  = document.getElementById('prev');
       const btnNext  = document.getElementById('next');
@@ -164,10 +169,10 @@
       function endSwipe() {
         if (!isDragging) return;
         isDragging = false;
-        track.style.transition = ''; // let CSS handle it
+        track.style.transition = '';
         const dx = currentX - startX;
-        if (dx > threshold) prev();
-        else if (dx < -threshold) next();
+        if (dx > 40) prev();
+        else if (dx < -40) next();
         else update();
       }
       track.addEventListener('touchend', endSwipe, { passive: true });
@@ -179,4 +184,3 @@
   </script>
 </body>
 </html>
-

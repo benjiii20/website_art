@@ -1,25 +1,34 @@
-<!-- public/login_page/login.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login</title>
-  <link rel="stylesheet" href="./login_styles.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Khaya — Login</title>
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./login_styles.css" />
 </head>
 <body>
-  <div class="login-wrapper">
-    <form id="loginForm" novalidate>
-      <!-- relative path (from /public/login_page/ to /public/logos/) -->
-      <img src="../logos/art_kingdom_temp.png" alt="Art Kingdom logo" class="login-logo" />
-      <input type="email" id="loginEmail" placeholder="Email" autocomplete="username" required />
-      <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
-      <button type="submit">Login</button>
-      <p id="login-error" aria-live="polite" style="color:red;"></p>
-    </form>
-  </div>
+<main class="login-page" aria-label="Login">
+<div class="login-card" role="form" aria-labelledby="khayaTitle">
+<img src="/logos/art_kingdom_temp.png" alt="Khaya logo" class="login-logo" width="320" height="100" />
+<h1 id="khayaTitle" class="brand">Khaya</h1>
+<p class="sub">Welcome back. Please sign in to continue.</p>
 
-  <!-- Supabase login logic (ESM) -->
-  <script type="module" src="./login.js"></script>
+<form id="loginForm" novalidate>
+<label class="sr-only" for="loginEmail">Email</label>
+<input type="email" id="loginEmail" placeholder="Email" autocomplete="username" required />
+
+<label class="sr-only" for="loginPassword">Password</label>
+<input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password" required />
+
+<button id="loginBtn" type="submit">Login</button>
+<p id="login-error" role="alert" aria-live="polite"></p>
+</form>
+</div>
+</main>
+
+<script type="module" src="./login.js"></script>
 </body>
 </html>

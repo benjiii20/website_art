@@ -1,67 +1,45 @@
-/* Reset default margins and set font */
-body {
-  font-family: Arial, sans-serif;
-  background-color: #f0f0f0;
-  margin: 0;
-  height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center; /* Perfect vertical centering */
+/* ====== Khaya NOIR Login ====== */
+:root{
+--bg:#0a0a0a; /* page background */
+--panel:#111214; /* card background */
+--ink: #f0dc08;               /* primary text */
+--muted: #fbf708; 
+--line:#242424; /* borders */
+--accent:#ffffff; /* accent/white */
+--radius:16px;
+--shadow:0 14px 40px rgba(0,0,0,.55);
 }
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(1200px 600px at 20% 10%, #121317 0%, #0a0a0a 48%, #050506 100%);color:var(--ink);font:400 16px/1.6 "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+img{max-width:100%;display:block}
 
-/* Make the form container wider to match the drawn logo area */
-.login-wrapper {
-  padding: 2rem;
-  border-radius: 10px;
-  width: 360px;             /* ← match your drawn width here */
-}
+/* Centered page */
+.login-page{min-height:100dvh;display:grid;place-items:center;padding:2rem}
 
+/* Card */
+.login-card{width:min(420px, 92vw);background:linear-gradient(180deg, rgba(255,255,255,.018), rgba(0,0,0,.02)), var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:2.2rem 2rem;display:grid;justify-items:center;gap:1rem}
+.login-logo{width:min(320px, 80%);height:auto;filter:contrast(1.05) brightness(.96)}
+.brand{margin:0;font-family:"Playfair Display", serif;letter-spacing:.14em;text-transform:capitalize;font-weight:700}
+.sub{margin:0 0 .5rem 0;color:var(--muted);font-size:.95rem;text-align:center}
 
-/* Form styling */
-#loginForm {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+/* Form */
+#loginForm{width:100%;display:grid;gap:.9rem}
+#loginForm input{width:100%;padding:.85rem 1rem;background:#0b0c0e;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-size:1rem;outline:none;transition:border-color .2s ease, box-shadow .2s ease}
+#loginForm input::placeholder{color:#8f8f8f}
+#loginForm input:focus{border-color:#3a3a3a;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
 
-/* Heading */
-#loginForm h1 {
-  margin-bottom: 8px;
-  text-align: center;
-}
+/* Button */
+#loginBtn{padding:.9rem 1.1rem;border-radius:999px;border:1px solid #2a2a2a;background:#f2f2f2;color:#0d0d0e;font-weight:600;font-size:1rem;cursor:pointer;transition:filter .15s ease, transform .02s ease}
+#loginBtn:hover{filter:brightness(.95)}
+#loginBtn:active{transform:translateY(1px)}
+#loginBtn[disabled]{opacity:.6;cursor:wait}
 
-/* Input fields */
-#loginForm input {
-  padding: 8px;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-}
+/* Error */
+#login-error{min-height:1.2em;margin:.25rem 0 0 0;color:#ff6b6b;text-align:center;font-size:.9rem}
 
-/* Button styling */
-#loginForm button {
-  padding: 8px;
-  font-size: 1rem;
-  background-color:gray;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
+/* Screen-reader only label utility */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-#loginForm button:hover {
-  background-color: gray;
-}
-
-/* Error message */
-#login-error {
-  font-size: 0.9rem;
-  text-align: center;
-}
-
-.login-logo {
-  display: block;
-  margin: 0 auto 20px auto;
-  width: 100%;              /* ← now it fills 360px exactly */
-  height: auto;
-}
+/* Small view adjustments */
+@media (max-width:420px){.brand{font-size:1.6rem}}
