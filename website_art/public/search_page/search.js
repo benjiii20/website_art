@@ -1,8 +1,7 @@
-// /public/search_page/search.js — updated with live-region support for Khaya NOIR
+// /public/search_page/search.js — static cards + profile artwork via view
 
 // === Config ===
-const ROTATE_MS = 2500;
-const FADE_MS   = 250;
+const pageSize = 12;
 
 // Supabase client
 const supabaseUrl = window.SUPABASE_URL;
@@ -12,7 +11,7 @@ if (!window.supabase) {
 }
 const supa = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-// Auth guard
+// Auth guard (matches your RLS = authenticated only)
 async function ensureSignedIn() {
   try {
     const { data: { session } } = await supa.auth.getSession();
@@ -43,17 +42,20 @@ const genderSel   = document.getElementById("filterGender");
 const liveRegion  = document.getElementById("resultsStatus");
 
 let page = 1;
-const pageSize = 12;
 let lastQuery = "";
 
-// Image rotation cleanup
-let rotationCleanups = [];
-function clearRotations() {
-  rotationCleanups.forEach(fn => { try { fn(); } catch {} });
-  rotationCleanups = [];
-}
-
-const REGION_COUNTRIES = { /* ...same mapping as before... */ };
+// Region -> countries mapping
+const REGION_COUNTRIES = {
+  "North Africa": ["Algeria","Egypt","Libya","Morocco","Sudan","Tunisia"],
+  "West Africa": ["Benin","Burkina Faso","Cabo Verde","Côte d’Ivoire","Gambia","Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Mauritania","Niger","Nigeria","Senegal","Sierra Leone","Togo"],
+  "East Africa": ["Burundi","Comoros","Djibouti","Eritrea","Ethiopia","Kenya","Madagascar","Malawi","Mauritius","Mozambique","Rwanda","Seychelles","Somalia","South Sudan","Tanzania","Uganda"],
+  "Central Africa": ["Angola","Cameroon","Central African Republic","Chad","Congo","Democratic Republic of the Congo","Equatorial Guinea","Gabon","São Tomé and Príncipe"],
+  "Southern Africa": ["Botswana","Eswatini","Lesotho","Namibia","South Africa","Zambia","Zimbabwe"],
+  "North America": ["Canada","United States","Mexico","Greenland"],
+  "Central America": ["Belize","Costa Rica","El Salvador","Guatemala","Honduras","Nicaragua","Panama"],
+  "Caribbean": ["Antigua and Barbuda","Bahamas","Barbados","Cuba","Dominica","Dominican Republic","Grenada","Haiti","Jamaica","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines","Trinidad and Tobago"],
+  "South America": ["Argentina","Bolivia","Brazil","Chile","Colombia","Ecuador","Guyana","Paraguay","Peru","Suriname","Uruguay","Venezuela"]
+};
 
 function resetCountrySelect() {
   if (!countrySel) return;
@@ -75,55 +77,27 @@ function populateCountries(region) {
 
 const PLACEHOLDER = "../sample_images/sample_img.png";
 
-function artistCard(artist, imagesForArtist) {
+// Static artist card (no rotation)
+function artistCard(artist, imageUrl) {
   const card = document.createElement("a");
   card.className = "artist-card";
   card.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
-  const imgs = (imagesForArtist && imagesForArtist.length > 0) ? imagesForArtist : [PLACEHOLDER];
+
+  const safeLocation = [artist.country, artist.region_sub].filter(Boolean).join(" — ");
+
   card.innerHTML = `
-    <div class="art-image"><img alt="${artist.name}" loading="lazy" /></div>
+    <div class="art-image">
+      <img alt="${artist.name}" loading="lazy" />
+    </div>
     <div class="artist-info">
       <h3>${artist.name}</h3>
-      ${artist.country || artist.region_sub ? `<p>${[artist.country, artist.region_sub].filter(Boolean).join(' — ')}</p>` : ''}
-      ${artist.bio ? `<p>${artist.bio.substring(0, 100)}${artist.bio.length > 100 ? '…' : ''}</p>` : ''}
+      ${safeLocation ? `<p>${safeLocation}</p>` : ""}
     </div>
   `;
 
   const imgEl = card.querySelector(".art-image img");
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let idx = 0;
-  let timerId = null;
+  imgEl.src = imageUrl || PLACEHOLDER;
 
-  function setImage(src) {
-    imgEl.style.opacity = 0;
-    setTimeout(() => {
-      imgEl.src = src || PLACEHOLDER;
-      imgEl.style.opacity = 1;
-    }, FADE_MS);
-  }
-  function rotate() {
-    idx = (idx + 1) % imgs.length;
-    setImage(imgs[idx]);
-  }
-  function start() {
-    if (timerId || imgs.length <= 1 || prefersReduced) return;
-    timerId = setInterval(rotate, ROTATE_MS);
-  }
-  function stop() {
-    if (timerId) { clearInterval(timerId); timerId = null; }
-  }
-
-  imgEl.src = imgs[0];
-  const onEnter = () => stop();
-  const onLeave = () => start();
-  card.addEventListener('mouseenter', onEnter);
-  card.addEventListener('mouseleave', onLeave);
-  start();
-  rotationCleanups.push(() => {
-    stop();
-    card.removeEventListener('mouseenter', onEnter);
-    card.removeEventListener('mouseleave', onLeave);
-  });
   return card;
 }
 
@@ -131,10 +105,10 @@ async function runSearch(q, pageNum = 1) {
   lastQuery = q;
   const from = (pageNum - 1) * pageSize;
   const to   = from + pageSize - 1;
-  clearRotations();
   listEl.innerHTML = "";
 
   try {
+    // 1) Fetch artists (published only, matches your RLS)
     let query = supa.from("artists")
       .select("id,name,slug,bio,country,region_sub,gender", { count: "exact" })
       .eq("is_published", true)
@@ -143,7 +117,9 @@ async function runSearch(q, pageNum = 1) {
 
     if (q && q.trim()) {
       const t = q.trim();
-      query = query.or(`name.ilike.%${t}%,slug.ilike.%${t}%,country.ilike.%${t}%,region_sub.ilike.%${t}%`);
+      query = query.or(
+        `name.ilike.%${t}%,slug.ilike.%${t}%,country.ilike.%${t}%,region_sub.ilike.%${t}%`
+      );
     }
     if (regionSel?.value)   query = query.eq("region_sub", regionSel.value);
     if (countrySel?.value)  query = query.eq("country", countrySel.value);
@@ -151,36 +127,43 @@ async function runSearch(q, pageNum = 1) {
 
     const { data: artists, error: artistsErr, count } = await query;
     if (artistsErr) {
-      if (artistsErr.code === "PGRST116" || artistsErr.message?.toLowerCase().includes("permission denied")) {
+      if (
+        artistsErr.code === "PGRST116" ||
+        artistsErr.message?.toLowerCase().includes("permission denied")
+      ) {
         location.href = "/admin.html";
         return;
       }
-      listEl.innerHTML = `<div class="artist-card" style="padding:15px;">Search error: ${artistsErr.message}</div>`;
+      listEl.innerHTML =
+        `<div class="artist-card" style="padding:15px;">Search error: ${artistsErr.message}</div>`;
       return;
     }
 
+    // 2) Fetch profile image per artist from view
     const artistIds = (artists || []).map(a => a.id);
-    const artworksByArtist = {};
+    const profileImageByArtist = {};
+
     if (artistIds.length > 0) {
-      const { data: artworks, error: artErr } = await supa
-        .from("artworks")
-        .select("artist_id,image_url,is_published")
-        .in("artist_id", artistIds)
-        .eq("is_published", true)
-        .order("created_at", { ascending: false });
-      if (!artErr) {
-        for (const row of artworks || []) {
-          if (!row.image_url) continue;
-          if (!artworksByArtist[row.artist_id]) artworksByArtist[row.artist_id] = [];
-          artworksByArtist[row.artist_id].push(row.image_url);
+      const { data: profiles, error: profileErr } = await supa
+        .from("v_artist_profile_image")
+        .select("artist_id, profile_image_url")
+        .in("artist_id", artistIds);
+
+      if (!profileErr) {
+        for (const row of profiles || []) {
+          if (!row.profile_image_url) continue;
+          profileImageByArtist[row.artist_id] = row.profile_image_url;
         }
+      } else {
+        console.error("profile view error:", profileErr);
       }
     }
 
+    // 3) Render cards
     listEl.innerHTML = "";
     (artists || []).forEach(a => {
-      const imgs = artworksByArtist[a.id] || [];
-      const card = artistCard(a, imgs);
+      const img = profileImageByArtist[a.id] || null;
+      const card = artistCard(a, img);
       listEl.appendChild(card);
     });
 
@@ -193,26 +176,45 @@ async function runSearch(q, pageNum = 1) {
     // Update live-region for accessibility
     if (liveRegion) {
       const total = count || 0;
-      liveRegion.textContent = `Showing ${artists?.length || 0} artists. Page ${page} of ${totalPages}. Total results: ${total}.`;
+      liveRegion.textContent =
+        `Showing ${artists?.length || 0} artists. Page ${page} of ${totalPages}. Total results: ${total}.`;
     }
   } catch (err) {
     console.error(err);
-    listEl.innerHTML = `<div class="artist-card" style="padding:15px;">Error: ${err.message || err}</div>`;
+    listEl.innerHTML =
+      `<div class="artist-card" style="padding:15px;">Error: ${err.message || err}</div>`;
   }
 }
 
-function debounce(fn, ms){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), ms); }; }
+function debounce(fn, ms) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
 
-inputEl.addEventListener("input", debounce(()=> runSearch(inputEl.value, 1), 250));
-regionSel?.addEventListener("change", () => { populateCountries(regionSel.value); runSearch(inputEl.value, 1); });
+inputEl.addEventListener(
+  "input",
+  debounce(() => runSearch(inputEl.value, 1), 250)
+);
+regionSel?.addEventListener("change", () => {
+  populateCountries(regionSel.value);
+  runSearch(inputEl.value, 1);
+});
 countrySel?.addEventListener("change", () => runSearch(inputEl.value, 1));
-genderSel?.addEventListener("change",  () => runSearch(inputEl.value, 1));
-prevBtn.addEventListener("click", ()=> runSearch(lastQuery, Math.max(1, page - 1)));
-nextBtn.addEventListener("click", ()=> runSearch(lastQuery, page + 1));
+genderSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+prevBtn.addEventListener("click", () =>
+  runSearch(lastQuery, Math.max(1, page - 1))
+);
+nextBtn.addEventListener("click", () =>
+  runSearch(lastQuery, page + 1)
+);
 
-(async function init(){
+(async function init() {
   const ok = await ensureSignedIn();
   if (!ok) return;
   resetCountrySelect();
   runSearch("", 1);
- })();
+})();
+

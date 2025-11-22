@@ -24,7 +24,7 @@
   img.preview { width:88px; height:88px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
   table { width:100%; border-collapse:collapse; margin-top:10px; }
   th, td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
-  td.actions { width: 180px; }
+  td.actions { width: 220px; }
   .btn-secondary { background:#f4f4f4; border:1px solid #ddd; }
   .btn-danger { background:#fee; border:1px solid #f6b; color:#a00; }
   .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #ddd; background:#fafafa; }
@@ -43,7 +43,10 @@
 <script type="module">
   import { requireAdmin } from "/_auth/auth-guard.js";
   (async () => {
-    const s = await requireAdmin({ redirectIfNoSession: "/admin.html", redirectIfNotAdmin: "/search_page/search_bar.html" });
+    const s = await requireAdmin({
+      redirectIfNoSession: "/admin.html",
+      redirectIfNotAdmin: "/search_page/search_bar.html"
+    });
     if (!s) return; // redirected if not admin
     const who = document.getElementById("whoami");
     if (who) who.textContent = s.user.email || s.user.id;
@@ -157,7 +160,11 @@
   <div id="artworksWrap">
     <h3 style="margin-top:16px">Existing artworks</h3>
     <table id="artworksTable">
-      <thead><tr><th>Image</th><th>Title</th><th>Year</th><th>Description</th><th class="actions">Actions</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Image</th><th>Title</th><th>Year</th><th>Description</th><th class="actions">Actions</th>
+        </tr>
+      </thead>
       <tbody></tbody>
     </table>
   </div>
@@ -169,31 +176,27 @@
   const ARTWORKS_BUCKET = window.ARTWORKS_BUCKET || 'artworks';
 
   async function ensureSessionOrRedirect() {
-    // This remains as a light extra check; the real admin gate happens above.
     const { data: { session } } = await supa.auth.getSession();
     if (!session?.user) {
       location.href = 'admin.html';
       return false;
     }
-    // 'whoami' is already set by the guard if available; keep this as a fallback.
     const who = document.getElementById('whoami');
     if (who && !who.textContent) who.textContent = session.user.email || session.user.id;
     return true;
   }
 
-  // Redirect away if user signs out
   supa.auth.onAuthStateChange((event) => {
     if (event === 'SIGNED_OUT') location.href = 'admin.html';
   });
 
   document.getElementById('signOut').onclick = async () => { await supa.auth.signOut(); };
 
-  // Helpers
   function setStatus(el, msg, cls='muted'){ el.textContent = msg; el.className = cls; }
   function slugify(s){ return (s||'').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
-  // Region data
+  // Region data (same as search.js)
   const REGION_COUNTRIES = {
     "North Africa": ["Algeria","Egypt","Libya","Morocco","Sudan","Tunisia"],
     "West Africa": ["Benin","Burkina Faso","Cabo Verde","Côte d’Ivoire","Gambia","Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Mauritania","Niger","Nigeria","Senegal","Sierra Leone","Togo"],
@@ -211,14 +214,26 @@
     "north america":"North America","central america":"Central America",
     "caribbean":"Caribbean","carribean":"Caribbean"
   };
-  function normalizeRegionLabel(label){ if(!label) return ""; const k=label.trim().toLowerCase(); return REGION_ALIASES[k] || label.trim(); }
-  function resetCountrySelect(selectEl){ selectEl.innerHTML = '<option value="">Country</option>'; selectEl.disabled = true; }
+  function normalizeRegionLabel(label){
+    if(!label) return "";
+    const k = label.trim().toLowerCase();
+    return REGION_ALIASES[k] || label.trim();
+  }
+  function resetCountrySelect(selectEl){
+    selectEl.innerHTML = '<option value="">Country</option>';
+    selectEl.disabled = true;
+  }
   function populateCountries(regionLabel, selectEl){
     const region = normalizeRegionLabel(regionLabel);
     resetCountrySelect(selectEl);
     const list = REGION_COUNTRIES[region];
     if(!list) return;
-    list.forEach(c => { const opt=document.createElement('option'); opt.value=c; opt.textContent=c; selectEl.appendChild(opt); });
+    list.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c;
+      opt.textContent = c;
+      selectEl.appendChild(opt);
+    });
     selectEl.disabled = false;
   }
   function storageKeyFromPublicUrl(url){
@@ -250,7 +265,6 @@
   const artistSaveBtn = document.getElementById('artistSaveBtn');
   const artistsTableBody = document.querySelector('#artistsTable tbody');
 
-  // pagination + search controls
   const artistSearch = document.getElementById('artistSearch');
   const prevArtists = document.getElementById('prevArtists');
   const nextArtists = document.getElementById('nextArtists');
@@ -407,7 +421,10 @@
   const artworksTableBody = document.querySelector('#artworksTable tbody');
 
   artImage.addEventListener('change', () => {
-    if (artImage.files[0]) { artPrev.src = URL.createObjectURL(artImage.files[0]); artPrev.style.display='block'; }
+    if (artImage.files[0]) {
+      artPrev.src = URL.createObjectURL(artImage.files[0]);
+      artPrev.style.display='block';
+    }
   });
 
   function setArtModeCreate(){
@@ -423,7 +440,12 @@
     artTitle.value = row.title || '';
     artYear.value = row.year || '';
     artDesc.value = row.description || '';
-    if(row.image_url){ artPrev.src = row.image_url; artPrev.style.display='block'; } else { artPrev.style.display='none'; }
+    if(row.image_url){
+      artPrev.src = row.image_url;
+      artPrev.style.display='block';
+    } else {
+      artPrev.style.display='none';
+    }
     artMode.textContent = 'Mode: Edit';
     artSaveBtn.textContent = 'Update artwork';
     artCancelBtn.style.display = 'inline-block';
@@ -465,24 +487,44 @@
     artworksTableBody.innerHTML = '';
     if (!artistId) return;
     const { data, error } = await supa.from('artworks')
-      .select('id,title,year,description,image_url,artist_id')
+      .select('id,title,year,description,image_url,artist_id,is_profile')
       .eq('artist_id', artistId)
       .order('created_at', { ascending: false });
     if (error) { console.error('loadArtworksTable error:', error); return; }
+
     (data || []).forEach(a => {
       const tr = document.createElement('tr');
+      const desc = a.description
+        ? a.description.substring(0, 140) + (a.description.length > 140 ? '…' : '')
+        : '';
+
+      const profileBadge = a.is_profile
+        ? '<span class="pill">Profile image</span> '
+        : '';
+
       tr.innerHTML = `
-        <td>${a.image_url ? `<img src="${a.image_url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee" />` : ''}</td>
+        <td>
+          ${a.image_url
+            ? `<img src="${a.image_url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee" />`
+            : ''}
+        </td>
         <td>${a.title || ''}</td>
         <td>${a.year || ''}</td>
-        <td>${a.description ? a.description.substring(0,140)+(a.description.length>140?'…':'') : ''}</td>
+        <td>${desc}</td>
         <td class="actions">
+          ${profileBadge}
+          <button type="button" class="btn-secondary" data-action="profile" data-id="${a.id}">
+            Set as profile
+          </button>
           <button type="button" class="btn-secondary" data-action="edit" data-id="${a.id}">Edit</button>
           <button type="button" class="btn-danger" data-action="delete" data-id="${a.id}">Delete</button>
         </td>
       `;
+
+      tr.querySelector('[data-action="profile"]').onclick = () => setProfileArtwork(a);
       tr.querySelector('[data-action="edit"]').onclick = () => setArtModeEdit(a);
       tr.querySelector('[data-action="delete"]').onclick = () => deleteArtwork(a);
+
       artworksTableBody.appendChild(tr);
     });
   }
@@ -499,9 +541,15 @@
   artForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const artistId = artistSelect.value;
-    if (!artistId) { setStatus(artOut, 'Pick an artist first.', 'error'); return; }
+    if (!artistId) {
+      setStatus(artOut, 'Pick an artist first.', 'error');
+      return;
+    }
     const title = artTitle.value.trim();
-    if (!title) { setStatus(artOut, 'Title is required.', 'error'); return; }
+    if (!title) {
+      setStatus(artOut, 'Title is required.', 'error');
+      return;
+    }
     const year = parseInt(artYear.value || '0', 10) || null;
 
     try {
@@ -514,20 +562,40 @@
 
       if(artIdEl.value){
         const { data: existing } = await supa.from('artworks').select('image_url').eq('id', artIdEl.value).single();
-        if(file){ image_url = await uploadArtworkImage(artistId, title, file); }
-        const updatePayload = { title, year, description: artDesc.value, is_published: true };
+        if(file){
+          image_url = await uploadArtworkImage(artistId, title, file);
+        }
+        const updatePayload = {
+          title,
+          year,
+          description: artDesc.value,
+          is_published: true
+        };
         if(image_url) updatePayload.image_url = image_url;
 
         await supa.from('artworks').update(updatePayload).eq('id', artIdEl.value).throwOnError();
-        if(image_url && existing?.image_url){ await removeArtworkImage(existing.image_url); }
+        if(image_url && existing?.image_url){
+          await removeArtworkImage(existing.image_url);
+        }
         setStatus(artOut, `Artwork updated ✔`, 'success');
       } else {
-        if(file){ image_url = await uploadArtworkImage(artistId, title, file); }
-        await supa.from('artworks').insert([{ artist_id: artistId, title, year, description: artDesc.value, image_url, is_published: true }]).throwOnError();
+        if(file){
+          image_url = await uploadArtworkImage(artistId, title, file);
+        }
+        await supa.from('artworks').insert([{
+          artist_id: artistId,
+          title,
+          year,
+          description: artDesc.value,
+          image_url,
+          is_published: true,
+          is_profile: false
+        }]).throwOnError();
         setStatus(artOut, `Artwork created ✔`, 'success');
       }
 
-      artForm.reset(); artPrev.style.display='none';
+      artForm.reset();
+      artPrev.style.display='none';
       setArtModeCreate();
       loadArtworksTable(artistId);
     } catch (err) {
@@ -543,7 +611,9 @@
     try{
       await requireAuth();
       await supa.from('artworks').delete().eq('id', artRow.id).throwOnError();
-      if(artRow.image_url){ await removeArtworkImage(artRow.image_url); }
+      if(artRow.image_url){
+        await removeArtworkImage(artRow.image_url);
+      }
       if(artIdEl.value === String(artRow.id)) setArtModeCreate();
       await loadArtworksTable(artRow.artist_id);
       alert('Artwork deleted.');
@@ -552,13 +622,37 @@
     }
   }
 
+  async function setProfileArtwork(artRow) {
+    try {
+      await requireAuth();
+
+      // Clear current profile for this artist
+      await supa
+        .from('artworks')
+        .update({ is_profile: false })
+        .eq('artist_id', artRow.artist_id)
+        .throwOnError();
+
+      // Set this one as profile
+      await supa
+        .from('artworks')
+        .update({ is_profile: true })
+        .eq('id', artRow.id)
+        .throwOnError();
+
+      setStatus(artOut, `Set "${artRow.title}" as profile image ✔`, 'success');
+      await loadArtworksTable(artRow.artist_id);
+    } catch (err) {
+      console.error(err);
+      setStatus(artOut, 'Error setting profile: ' + (err?.message || err), 'error');
+    }
+  }
+
   // ---------- Boot ----------
   (async function init(){
     const ok = await ensureSessionOrRedirect();
     if(!ok) return;
-    // Region select hookup
     regionEl.addEventListener('change', () => populateCountries(regionEl.value, countryEl));
-    // Load pages
     await loadArtistsList(1);
     await loadArtistsIntoSelect();
   })();

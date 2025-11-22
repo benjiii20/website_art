@@ -20,7 +20,6 @@
       <div>
         <h1 id="artistName" class="title">Loading artist…</h1>
         <p id="artistMeta" class="meta"></p>
-        <p id="artistTagline" class="tagline"></p>
       </div>
     </header>
 
@@ -50,7 +49,6 @@
     (async function () {
       const nameEl = document.getElementById('artistName');
       const metaEl = document.getElementById('artistMeta');
-      const taglineEl = document.getElementById('artistTagline');
       const statementEl = document.getElementById('artistStatement');
       const galleryLink = document.getElementById('artistGalleryLink');
       const worksEl = document.getElementById('works');
@@ -82,7 +80,6 @@
 
       nameEl.textContent = artist.name || 'Untitled artist';
       metaEl.textContent = [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
-      taglineEl.textContent = artist.bio || 'No bio provided yet.';
       statementEl.textContent = artist.bio || 'No statement provided yet.';
       galleryLink.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
       galleryLink.setAttribute('aria-label', `View gallery for ${artist.name}`);
