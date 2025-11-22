@@ -25,7 +25,11 @@
     <a href="../search_page/search_bar.html" class="back-btn" aria-label="Back to search page">‹</a>
 
     <header class="artist-header">
-      <h1 id="artistName" class="artist-title"></h1>
+      <h1 class="artist-title">
+        <a id="artistLink" class="artist-title-link" href="#" aria-label="Open artist bio">
+          <span id="artistName"></span>
+        </a>
+      </h1>
       <p id="artistMeta" class="artist-meta"></p>
     </header>
 
@@ -62,6 +66,7 @@
         .eq('is_published', true)
         .maybeSingle();
 
+
       if (artistErr) return showError('Error loading artist: ' + artistErr.message);
       if (!artist)   return showError('Artist not found or unpublished.');
 
@@ -69,6 +74,9 @@
       document.getElementById('artistName').textContent = artist.name || '';
       document.getElementById('artistMeta').textContent =
         [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
+      const artistLink = document.getElementById('artistLink');
+      artistLink.href = `../biopage/biopage.html?slug=${encodeURIComponent(artist.slug)}`;
+      artistLink.setAttribute('aria-label', `Open bio for ${artist.name}`);
 
       // 2) Fetch this artist's published artworks
       const { data: arts, error: artsErr } = await supa

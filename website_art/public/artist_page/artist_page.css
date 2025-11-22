@@ -11,11 +11,11 @@
   --box-bg: #111214;            /* card/stage background */
 
   /* Frame controls */
-  --stage-max: 1120px;          /* cap the frame width */
+  --stage-max: 960px;           /* cap the frame width (about 50% of desktop viewport) */
   --stage-ratio: 16/9;          /* frame aspect ratio */
 
   /* Slider scale tokens */
-  --scale: 2.0;
+  --scale: 1.2;
   --base-card: 360px;
   --base-img-h: 300px;
   --base-cap: 0.85rem;
@@ -28,9 +28,11 @@
 @media (max-width: 640px)  { :root { --stage-ratio: 1/1; } }
 
 /* 2) Frame uses aspect-ratio and stays centered */
+/* ===== Framed gallery (NOIR stage) ===== */
 .gallery {
-  width: min(92vw, var(--stage-max));
-  margin: 22px auto;
+  position: relative;
+  width: clamp(280px, 50vw, var(--stage-max));  /* about half the viewport, with a sensible min/max */
+  margin: 32px auto;                   /* centered horizontally */
   aspect-ratio: var(--stage-ratio);
   background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--box-bg);
   border: 1px solid var(--line);
@@ -38,6 +40,7 @@
   overflow: hidden;
   box-shadow: 0 14px 40px rgba(0,0,0,.45);
 }
+
 
 /* 3) Images fill and stay visually centered */
 .slide img { width: 100%; height: 100%; object-fit:contain; object-position: center; }
@@ -54,7 +57,7 @@ body {
   margin: 0;
   font: 16px/1.7 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--ink);
-  background: radial-gradient(1200px 600px at 20% 10%, #121317 0%, #0a0a0a 48%, #050506 100%);
+  background: #0a0a0a; /* uniform dark backdrop */
   -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
 }
 
@@ -74,14 +77,27 @@ body {
   letter-spacing: .01em;
   color: #fff;
 }
+.artist-title-link {
+  color: inherit;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.artist-title-link:hover,
+.artist-title-link:focus-visible {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--ink);
+}
 .artist-meta { margin: 0; color: var(--muted); }
 .artist-bio { color: var(--muted); max-width: 72ch; }
 
 /* ===== Framed gallery (NOIR stage) ===== */
 .gallery {
   position: relative;
-  width: min(92vw, var(--stage-max));
-  margin: 22px auto;                 /* centered */
+  width: clamp(280px, 50vw, var(--stage-max));
+  margin: 24px auto;                 /* centered */
   aspect-ratio: var(--stage-ratio);
   background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--box-bg);
   border: 1px solid var(--line);
@@ -183,7 +199,7 @@ body {
 
 /* Description under the frame — same width as the gallery */
 #artwork-desc {
-  width: min(92vw, var(--stage-max));
+  width: clamp(280px, 50vw, var(--stage-max));
   margin: 16px auto 0;
   color: var(--muted);
 }

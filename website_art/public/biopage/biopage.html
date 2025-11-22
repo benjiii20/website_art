@@ -7,15 +7,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="biopage.css">
+  <script>
+    window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+    window.SUPABASE_ANON_KEY =  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="avatar" aria-hidden="true"></div>
       <div>
-        <h1 class="title">Amara Cole</h1>
-        <p class="meta">Lagos, Nigeria • Abstract • Mixed media</p>
-        <p class="tagline">Amara builds luminous dreamscapes inspired by West African city lights, blending acrylic, found textiles, and projected light.</p>
+        <h1 id="artistName" class="title">Loading artist…</h1>
+        <p id="artistMeta" class="meta"></p>
+        <p id="artistTagline" class="tagline"></p>
       </div>
     </header>
 
@@ -31,37 +36,102 @@
 
       <section class="panel">
         <h2>Statement</h2>
-        <p class="statement-text">I paint the feeling of neon in rainstorms, remixing fabrics from Balogun Market with bold strokes to preserve memories that refuse to fade. Each piece carries motion—between past and future, between city rhythm and quiet dawn.</p>
+        <p id="artistStatement" class="statement-text"></p>
       </section>
     </div>
 
     <section class="panel featured">
       <h2>Featured Works</h2>
-      <div class="works">
-        <article class="work">
-          <div class="thumb" aria-hidden="true"></div>
-          <div>
-            <h3>Night Market Bloom (2024)</h3>
-            <p>Textile collage with acrylic glaze capturing the glow of stalls at dusk.</p>
-          </div>
-        </article>
-        <article class="work">
-          <div class="thumb" aria-hidden="true"></div>
-          <div>
-            <h3>Signal Paths (2023)</h3>
-            <p>Projected light on layered canvas, mapping the chaos of city traffic.</p>
-          </div>
-        </article>
-        <article class="work">
-          <div class="thumb" aria-hidden="true"></div>
-          <div>
-            <h3>Silver Harmattan (2022)</h3>
-            <p>Mixed media portrait exploring resilience in seasonal shifts.</p>
-          </div>
-        </article>
-      </div>
-      <a class="cta" href="../artist_page/artist_page.html">View full gallery</a>
+      <div id="works" class="works"></div>
+      <a id="artistGalleryLink" class="cta" href="../artist_page/artist_page.html">View full gallery</a>
     </section>
   </div>
+  <script>
+    (async function () {
+      const nameEl = document.getElementById('artistName');
+      const metaEl = document.getElementById('artistMeta');
+      const taglineEl = document.getElementById('artistTagline');
+      const statementEl = document.getElementById('artistStatement');
+      const galleryLink = document.getElementById('artistGalleryLink');
+      const worksEl = document.getElementById('works');
+
+      const params = new URLSearchParams(location.search);
+      const slug = params.get('slug');
+
+      const showError = (msg) => {
+        nameEl.textContent = 'Artist unavailable';
+        metaEl.textContent = '';
+        taglineEl.textContent = msg;
+        statementEl.textContent = msg;
+        worksEl.innerHTML = `<p class="muted">${msg}</p>`;
+      };
+
+      if (!slug) return showError('Missing artist slug in the URL.');
+      if (!window.supabase) return showError('Supabase not available.');
+
+      const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      const { data: artist, error } = await supa
+        .from('artists')
+        .select('id,name,slug,bio,country,region_sub,gender,is_published')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .maybeSingle();
+
+      if (error) return showError('Error loading artist: ' + error.message);
+      if (!artist) return showError('Artist not found or unpublished.');
+
+      nameEl.textContent = artist.name || 'Untitled artist';
+      metaEl.textContent = [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
+      taglineEl.textContent = artist.bio || 'No bio provided yet.';
+      statementEl.textContent = artist.bio || 'No statement provided yet.';
+      galleryLink.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
+      galleryLink.setAttribute('aria-label', `View gallery for ${artist.name}`);
+      document.title = `${artist.name} — Bio`;
+
+      // Fetch a few published artworks to preview (same data entered via admin)
+      const { data: works, error: worksErr } = await supa
+        .from('artworks')
+        .select('id,title,description,year,image_url,is_published,created_at')
+        .eq('artist_id', artist.id)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      if (worksErr) {
+        worksEl.innerHTML = `<p class="muted">Error loading artworks: ${worksErr.message}</p>`;
+        return;
+      }
+
+      worksEl.innerHTML = '';
+      const list = works && works.length ? works : [{
+        title: 'No artworks yet',
+        description: 'Published pieces will appear here.',
+        image_url: '../sample_images/sample_img.png'
+      }];
+
+      list.forEach((a) => {
+        const article = document.createElement('article');
+        article.className = 'work';
+
+        const thumb = document.createElement('div');
+        thumb.className = 'thumb';
+        const imgSrc = a.image_url || '../sample_images/sample_img.png';
+        thumb.style.backgroundImage = `url('${imgSrc}')`;
+
+        const body = document.createElement('div');
+        const title = document.createElement('h3');
+        const yearText = a.year ? ` (${a.year})` : '';
+        title.textContent = `${a.title || 'Untitled'}${yearText}`;
+        const desc = document.createElement('p');
+        desc.textContent = a.description || 'No description.';
+
+        body.appendChild(title);
+        body.appendChild(desc);
+        article.appendChild(thumb);
+        article.appendChild(body);
+        worksEl.appendChild(article);
+      });
+    })();
+  </script>
 </body>
 </html>
