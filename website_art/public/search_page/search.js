@@ -40,15 +40,8 @@ const regionSel   = document.getElementById("filterRegion");
 const countrySel  = document.getElementById("filterCountry");
 const genderSel   = document.getElementById("filterGender");
 const liveRegion  = document.getElementById("resultsStatus");
-
-// NEW FILTER DOM REFS
-const mediumSel   = document.getElementById("filterMedium");    // Medium / Art Form
-const styleSel    = document.getElementById("filterStyle");     // Style / Aesthetic
-const themeSel    = document.getElementById("filterTheme");     // Themes / Content
-const moodSel     = document.getElementById("filterMood");      // Mood
-const paletteSel  = document.getElementById("filterPalette");   // Color Palette
-const levelSel    = document.getElementById("filterLevel");     // Artist Level
-const formatSel   = document.getElementById("filterFormat");    // Format / Size
+const favoritesListEl = document.getElementById("favoritesList");
+const clearFavBtn = document.getElementById("clearFavorites");
 
 let page = 1;
 let lastQuery = "";
@@ -248,3 +241,4 @@ nextBtn.addEventListener("click", () =>
   resetCountrySelect();
   runSearch("", 1);
 })();
+

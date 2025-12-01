@@ -26,13 +26,23 @@
   <div class="search-container">
     <!-- Search bar + filters -->
     <div class="search-controls">
-      <input
-        id="searchInput"
-        type="text"
-        placeholder="Name, region, country"
-        class="search-input"
-        aria-label="Search artists by name, region, or country"
-      />
+      <div class="search-top">
+        <input
+          id="searchInput"
+          type="text"
+          placeholder="Name, region, country"
+          class="search-input"
+          aria-label="Search artists by name, region, or country"
+        />
+
+        <section class="favorites-box" aria-label="Favorite artists">
+          <div class="favorites-header">
+            <h2>Favorites</h2>
+            <button id="clearFavorites" type="button" class="fav-clear">Clear</button>
+          </div>
+          <div id="favoritesList" class="favorites-list" aria-live="polite"></div>
+        </section>
+      </div>
 
       <div class="filters">
         <!-- Region / Country / Gender -->
