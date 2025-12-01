@@ -42,6 +42,10 @@
       <div class="dots" id="dots" aria-label="Slide pagination"></div>
     </div>
 
+    <div class="preview-overlay" id="previewOverlay" role="dialog" aria-modal="true" aria-label="Artwork preview">
+      <img id="previewImage" alt="Artwork preview" />
+    </div>
+
     <p id="artwork-desc" class="artwork-desc" aria-live="polite"></p>
   </div>
 
@@ -90,6 +94,8 @@
 
       // 3) Render slides
       const track = document.getElementById('track');
+      const previewOverlay = document.getElementById('previewOverlay');
+      const previewImage   = document.getElementById('previewImage');
       const makeFig = (a) => {
         const fig = document.createElement('figure');
         fig.className = 'slide';
@@ -185,6 +191,27 @@
       }
       track.addEventListener('touchend', endSwipe, { passive: true });
       track.addEventListener('touchcancel', endSwipe, { passive: true });
+
+      // Preview lightbox
+      function openPreview() {
+        const slide = slides[index];
+        const img = slide.querySelector('img');
+        if (!img) return;
+        previewImage.src = img.src;
+        previewImage.alt = img.alt || 'Artwork preview';
+        previewOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      }
+      function closePreview() {
+        previewOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+      document.querySelector('.gallery').addEventListener('click', (e) => {
+        const controlClicked = e.target.closest('.nav') || e.target.closest('.dots');
+        if (controlClicked) return; // avoid opening when using controls
+        openPreview();
+      });
+      previewOverlay.addEventListener('click', closePreview);
 
       // init
       update();

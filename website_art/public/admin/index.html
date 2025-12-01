@@ -21,7 +21,7 @@
   .success { color: #137333; }
   .error { color:#b80606; }
   .stack { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
-  img.preview { width:88px; height:88px; object-fit:cover; border-radius:8px; border:1px solid #ddd; }
+  img.preview { width:88px; height:88px; object-fit:contain; border-radius:8px; border:1px solid #ddd; background:#000; }
   table { width:100%; border-collapse:collapse; margin-top:10px; }
   th, td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
   td.actions { width: 220px; }
@@ -633,7 +633,7 @@
       tr.innerHTML = `
         <td>
           ${a.image_url
-            ? `<img src="${a.image_url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid #eee" />`
+            ? `<img src="${a.image_url}" style="width:60px;height:60px;object-fit:contain;border-radius:6px;border:1px solid #eee;background:#000" />`
             : ''}
         </td>
         <td>${a.title || ''}</td>
