@@ -1,14 +1,17 @@
-
 /* ===== Tokens ===== */
 :root {
   --page-max: 980px;
   --gap: 24px;
   --radius: 14px;
-  --line: #242424;              /* hairline borders */
-  --ink: #f0dc08;               /* primary text */
-  --muted: #fbf708;             /* secondary text */
-  --bg: #0a0a0a;                /* page background */
-  --box-bg: #111214;            /* card/stage background */
+
+  /* All dark surfaces unified */
+  --bg: #070708;                /* main background (soft deep black) */
+  --box-bg: var(--bg);          /* gallery frame background */
+  --line: var(--bg);            /* frame line matches background */
+
+  /* Luxe gold tones */
+  --ink:   #f2c34a;             /* primary text (rich gold) */
+  --muted: #c99b33;             /* secondary text (softer gold) */
 
   /* Frame controls */
   --stage-max: 960px;           /* cap the frame width (about 50% of desktop viewport) */
@@ -27,45 +30,23 @@
 @media (max-width: 1024px) { :root { --stage-ratio: 4/3; } }
 @media (max-width: 640px)  { :root { --stage-ratio: 1/1; } }
 
-/* 2) Frame uses aspect-ratio and stays centered */
-/* ===== Framed gallery (NOIR stage) ===== */
-.gallery {
-  position: relative;
-  width: clamp(280px, 50vw, var(--stage-max));  /* about half the viewport, with a sensible min/max */
-  margin: 32px auto;                   /* centered horizontally */
-  aspect-ratio: var(--stage-ratio);
-  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--box-bg);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  overflow: hidden;
-  box-shadow: 0 14px 40px rgba(0,0,0,.45);
-}
-
-
-/* 3) Images fill and stay visually centered */
-.slide img { width: 100%; height: 100%; object-fit:contain; object-position: center; }
-
-/* 4) Arrows sit inside the frame (no negative offsets) */
-.nav { top: 50%; transform: translateY(-50%); }
-.prev { left: .75rem; }
-.next { right: .75rem; }
-
-/* 5) Prevent layout nudge on ultrawide due to transforms */
+/* Prevent layout nudge on ultrawide due to transforms */
 html, body { overflow-x: hidden; }
 
 body {
   margin: 0;
   font: 16px/1.7 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   color: var(--ink);
-  background: #0a0a0a; /* uniform dark backdrop */
-  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  background: var(--bg); /* unified background token */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Page wrapper */
 .artist_page-wrapper {
   max-width: var(--page-max);
-  margin: 48px auto;
-  padding: 0 20px 40px;
+  margin: 32px auto;        /* slightly tighter */
+  padding: 0 20px 32px;
 }
 
 /* Header */
@@ -96,17 +77,19 @@ body {
 /* ===== Framed gallery (NOIR stage) ===== */
 .gallery {
   position: relative;
-  width: clamp(280px, 50vw, var(--stage-max));
-  margin: 24px auto;                 /* centered */
+  width: clamp(280px, 50vw, var(--stage-max));  /* about half the viewport, with sensible min/max */
+  margin: 16px auto;                            /* closer to header */
   aspect-ratio: var(--stage-ratio);
-  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--box-bg);
-  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)),
+    var(--box-bg);                              /* same as page bg */
+  border: 1px solid var(--line);                /* same color as bg */
   border-radius: var(--radius);
-  overflow: hidden;               /* hides overflow like the screenshot */
+  overflow: hidden;                             /* hides overflow like a framed piece */
   box-shadow: 0 14px 40px rgba(0,0,0,.45);
 }
 
-/* Track fills the frame so slides/images can stretch to it */
+/* Track fills the frame so slides/images can sit inside it */
 .track {
   display: flex;
   height: 100%;
@@ -120,27 +103,29 @@ body {
   height: 100%;
   margin: 0;
   position: relative;
-  display: grid;
-  place-items: center;
-  background: #000;               /* only visible while image loads */
+
+  /* Center the image without cropping */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--bg);   /* letterbox matches page background */
 }
 
-/* Images fill the frame while keeping cover */
+/* Images should NEVER be cropped */
 .slide img {
-  width: 100%;
-  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
   object-fit: contain;
-  background: #000;
+  object-position: center;
+  background: var(--bg);   /* any empty areas match page & frame */
 }
 
-/* Caption overlay */
+/* Caption overlay (HIDDEN: removes the name/text on image) */
 .slide figcaption {
-  position: absolute;
-  left: 0; right: 0; bottom: 0;
-  color: #f0f0f0;
-  background: linear-gradient(transparent, rgba(0,0,0,.65));
-  font-size: calc(var(--base-cap) * var(--scale));
-  padding: calc(0.5rem * var(--scale)) calc(0.75rem * var(--scale));
+  display: none;
 }
 
 /* Arrows */
@@ -164,10 +149,13 @@ body {
 .nav:hover { background: rgba(255,255,255,.08); }
 .nav:disabled { opacity: .45; cursor: default; }
 
-/* Pull arrows slightly outside the frame on wide screens */
+/* Position arrows slightly outside on wide screens, inside on small */
 .prev { left: calc(-2.5rem * var(--scale)); }
 .next { right: calc(-2.5rem * var(--scale)); }
-@media (max-width: 900px) { .prev { left: .5rem; } .next { right: .5rem; } }
+@media (max-width: 900px) {
+  .prev { left: .5rem; }
+  .next { right: .5rem; }
+}
 
 /* Dots */
 .dots {
@@ -180,22 +168,37 @@ body {
   height: calc(8px * var(--scale));
   border-radius: 999px;
   border: 0;
-  background: rgba(255,255,255,.35);
+  background: rgba(201, 155, 51, 0.5);   /* muted gold */
   cursor: pointer;
 }
-.dots button[aria-current="true"] { background: #fff; }
+.dots button[aria-current="true"] {
+  background: #f2c34a;                   /* main gold */
+}
 
 /* Back button */
 .back-btn {
-  position: fixed; top: 1rem; left: 1rem; z-index: 1000;
-  display: grid; place-items: center;
-  width: 2.5rem; height: 2.5rem; font-size: 1.2rem; font-weight: 600; color: var(--ink);
-  background: rgba(255,255,255,.02);
-  border: 1px solid var(--line);
-  border-radius: 999px; text-decoration: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ink);                     /* gold arrow */
+  background: var(--bg);                 /* same black as page */
+  border: 1px solid var(--bg);           /* border matches background (invisible) */
+  border-radius: 999px;
+  text-decoration: none;
   transition: background .2s ease, color .2s ease, border-color .2s ease;
 }
-.back-btn:hover { background: #0f0f12; color: #fff; border-color: #2f2f2f; }
+.back-btn:hover {
+  background: rgba(242, 195, 74, 0.12);  /* soft gold glow */
+  color: #ffffff;
+  border-color: var(--bg);               /* still matches background */
+}
 
 /* Description under the frame — same width as the gallery */
 #artwork-desc {
@@ -205,4 +208,10 @@ body {
 }
 
 /* Errors */
-.error { color: #ff6b6b; background: rgba(255,107,107,.08); border: 1px solid rgba(255,107,107,.25); padding: .75rem 1rem; border-radius: 10px; }
+.error {
+  color: #ff6b6b;
+  background: rgba(255,107,107,.08);
+  border: 1px solid rgba(255,107,107,.25);
+  padding: .75rem 1rem;
+  border-radius: 10px;
+}

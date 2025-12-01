@@ -97,6 +97,101 @@
       </select>
     </div>
 
+    <!-- NEW: Medium / Style / Theme -->
+    <div class="row3">
+      <!-- Medium / Art Form -->
+      <select id="artistMedium">
+        <option value="">Medium / Art Form</option>
+        <option value="Painting">Painting</option>
+        <option value="Drawing / Illustration">Drawing / Illustration</option>
+        <option value="Collage">Collage</option>
+        <option value="Textile Art">Textile Art</option>
+      </select>
+
+      <!-- Style / Aesthetic -->
+      <select id="artistStyle">
+        <option value="">Style / Aesthetic</option>
+        <option value="Abstract">Abstract</option>
+        <option value="Figurative">Figurative</option>
+        <option value="Minimalist">Minimalist</option>
+        <option value="Surreal">Surreal</option>
+        <option value="Expressionist">Expressionist</option>
+        <option value="Conceptual">Conceptual</option>
+        <option value="Realism">Realism</option>
+        <option value="Pop Art">Pop Art</option>
+        <option value="Contemporary">Contemporary</option>
+        <option value="Street Art">Street Art</option>
+        <option value="Futuristic">Futuristic</option>
+        <option value="Organic / Nature-Inspired">Organic / Nature-Inspired</option>
+        <option value="Geometric">Geometric</option>
+        <option value="Portraiture">Portraiture</option>
+        <option value="Landscape">Landscape</option>
+      </select>
+
+      <!-- Themes / Content -->
+      <select id="artistTheme">
+        <option value="">Themes / Content</option>
+        <option value="Identity">Identity</option>
+        <option value="Gender & Body">Gender &amp; Body</option>
+        <option value="Spirituality">Spirituality</option>
+        <option value="Politics & Society">Politics &amp; Society</option>
+        <option value="Culture & Heritage">Culture &amp; Heritage</option>
+        <option value="Urban Life">Urban Life</option>
+        <option value="Nature & Environment">Nature &amp; Environment</option>
+        <option value="Technology & AI">Technology &amp; AI</option>
+        <option value="Emotion & Psychology">Emotion &amp; Psychology</option>
+        <option value="Mythology & Symbolism">Mythology &amp; Symbolism</option>
+        <option value="Migration & Memory">Migration &amp; Memory</option>
+      </select>
+    </div>
+
+    <!-- NEW: Mood / Palette / Level / Format -->
+    <div class="row3">
+      <!-- Mood -->
+      <select id="artistMood">
+        <option value="">Mood</option>
+        <option value="Calm">Calm</option>
+        <option value="Vibrant">Vibrant</option>
+        <option value="Dark">Dark</option>
+        <option value="Dreamy">Dreamy</option>
+        <option value="Energetic">Energetic</option>
+        <option value="Intense">Intense</option>
+        <option value="Soft">Soft</option>
+        <option value="Bold">Bold</option>
+      </select>
+
+      <!-- Color Palette -->
+      <select id="artistPalette">
+        <option value="">Color Palette</option>
+        <option value="Monochrome">Monochrome</option>
+        <option value="Black & White">Black &amp; White</option>
+        <option value="Warm Tones">Warm Tones</option>
+        <option value="Cool Tones">Cool Tones</option>
+        <option value="Earthy">Earthy</option>
+        <option value="Pastel">Pastel</option>
+        <option value="Bright / Multicolor">Bright / Multicolor</option>
+      </select>
+
+      <!-- Artist Level / Format share last slot (stack) -->
+      <div class="stack" style="gap:8px; flex-wrap:nowrap;">
+        <select id="artistLevel" style="flex:1;">
+          <option value="">Artist Level</option>
+          <option value="Emerging Artist">Emerging Artist</option>
+          <option value="Mid-Career Artist">Mid-Career Artist</option>
+          <option value="Established Artist">Established Artist</option>
+          <option value="Student / Academy Artist">Student / Academy Artist</option>
+        </select>
+
+        <select id="artistFormat" style="flex:1;">
+          <option value="">Format / Size</option>
+          <option value="Small">Small</option>
+          <option value="Medium">Medium</option>
+          <option value="Large">Large</option>
+          <option value="Extra Large">Extra Large</option>
+        </select>
+      </div>
+    </div>
+
     <div class="stack">
       <button type="submit" id="artistSaveBtn">Save artist</button>
       <button type="button" id="artistCancelBtn" class="btn-secondary" style="display:none">Cancel edit</button>
@@ -171,7 +266,7 @@
 </section>
 
 <script>
-  // ---------- Setup ----------
+  // ---------- Setup ----------  
   const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
   const ARTWORKS_BUCKET = window.ARTWORKS_BUCKET || 'artworks';
 
@@ -265,6 +360,15 @@
   const artistSaveBtn = document.getElementById('artistSaveBtn');
   const artistsTableBody = document.querySelector('#artistsTable tbody');
 
+  // NEW: extended artist metadata
+  const artistMediumEl  = document.getElementById('artistMedium');
+  const artistStyleEl   = document.getElementById('artistStyle');
+  const artistThemeEl   = document.getElementById('artistTheme');
+  const artistMoodEl    = document.getElementById('artistMood');
+  const artistPaletteEl = document.getElementById('artistPalette');
+  const artistLevelEl   = document.getElementById('artistLevel');
+  const artistFormatEl  = document.getElementById('artistFormat');
+
   const artistSearch = document.getElementById('artistSearch');
   const prevArtists = document.getElementById('prevArtists');
   const nextArtists = document.getElementById('nextArtists');
@@ -294,6 +398,16 @@
     regionEl.value = row.region_sub || '';
     populateCountries(regionEl.value, countryEl);
     countryEl.value = row.country || '';
+
+    // NEW: fill extended metadata
+    artistMediumEl.value  = row.medium || '';
+    artistStyleEl.value   = row.style || '';
+    artistThemeEl.value   = row.theme || '';
+    artistMoodEl.value    = row.mood || '';
+    artistPaletteEl.value = row.color_palette || '';
+    artistLevelEl.value   = row.artist_level || '';
+    artistFormatEl.value  = row.format_size || '';
+
     artistMode.textContent = 'Mode: Edit';
     artistSaveBtn.textContent = 'Update artist';
     artistCancelBtn.style.display = 'inline-block';
@@ -313,12 +427,22 @@
       await requireAuth();
 
       const payload = {
-        name, slug,
+        name,
+        slug,
         bio: bioEl.value,
         gender: genderEl.value || null,
         region_sub: normalizeRegionLabel(regionEl.value) || null,
         country: countryEl.value || null,
-        is_published: true
+        is_published: true,
+
+        // NEW: extended metadata
+        medium:        artistMediumEl.value  || null,
+        style:         artistStyleEl.value   || null,
+        theme:         artistThemeEl.value   || null,
+        mood:          artistMoodEl.value    || null,
+        color_palette: artistPaletteEl.value || null,
+        artist_level:  artistLevelEl.value   || null,
+        format_size:   artistFormatEl.value  || null
       };
 
       if(artistIdEl.value){
@@ -363,7 +487,11 @@
     const from = (page - 1) * artistPageSize;
     const to   = from + artistPageSize;
     let q = supa.from('artists')
-      .select('id,name,slug,region_sub,country,bio,gender', { count: 'exact' })
+      .select(
+        'id,name,slug,region_sub,country,bio,gender,' +
+        'medium,style,theme,mood,color_palette,artist_level,format_size',
+        { count: 'exact' }
+      )
       .eq('is_published', true);
 
     const term = (artistSearch.value || '').trim();
@@ -513,9 +641,7 @@
         <td>${desc}</td>
         <td class="actions">
           ${profileBadge}
-          <button type="button" class="btn-secondary" data-action="profile" data-id="${a.id}">
-            Set as profile
-          </button>
+          <button type="button" class="btn-secondary" data-action="profile" data-id="${a.id}">Set as profile</button>
           <button type="button" class="btn-secondary" data-action="edit" data-id="${a.id}">Edit</button>
           <button type="button" class="btn-danger" data-action="delete" data-id="${a.id}">Delete</button>
         </td>

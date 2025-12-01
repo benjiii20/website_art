@@ -41,6 +41,15 @@ const countrySel  = document.getElementById("filterCountry");
 const genderSel   = document.getElementById("filterGender");
 const liveRegion  = document.getElementById("resultsStatus");
 
+// NEW FILTER DOM REFS
+const mediumSel   = document.getElementById("filterMedium");    // Medium / Art Form
+const styleSel    = document.getElementById("filterStyle");     // Style / Aesthetic
+const themeSel    = document.getElementById("filterTheme");     // Themes / Content
+const moodSel     = document.getElementById("filterMood");      // Mood
+const paletteSel  = document.getElementById("filterPalette");   // Color Palette
+const levelSel    = document.getElementById("filterLevel");     // Artist Level
+const formatSel   = document.getElementById("filterFormat");    // Format / Size
+
 let page = 1;
 let lastQuery = "";
 
@@ -110,20 +119,32 @@ async function runSearch(q, pageNum = 1) {
   try {
     // 1) Fetch artists (published only, matches your RLS)
     let query = supa.from("artists")
-      .select("id,name,slug,bio,country,region_sub,gender", { count: "exact" })
+      .select("id,name,slug,bio,country,region_sub,gender,medium,style,theme,mood,color_palette,artist_level,format_size", { count: "exact" })
       .eq("is_published", true)
       .order("created_at", { ascending: false })
       .range(from, to);
 
+    // Text search
     if (q && q.trim()) {
       const t = q.trim();
       query = query.or(
         `name.ilike.%${t}%,slug.ilike.%${t}%,country.ilike.%${t}%,region_sub.ilike.%${t}%`
       );
     }
+
+    // Existing filters
     if (regionSel?.value)   query = query.eq("region_sub", regionSel.value);
     if (countrySel?.value)  query = query.eq("country", countrySel.value);
     if (genderSel?.value)   query = query.eq("gender", genderSel.value);
+
+    // NEW FILTERS (columns exist in artists table)
+    if (mediumSel?.value)   query = query.eq("medium", mediumSel.value);
+    if (styleSel?.value)    query = query.eq("style", styleSel.value);
+    if (themeSel?.value)    query = query.eq("theme", themeSel.value);
+    if (moodSel?.value)     query = query.eq("mood", moodSel.value);
+    if (paletteSel?.value)  query = query.eq("color_palette", paletteSel.value);
+    if (levelSel?.value)    query = query.eq("artist_level", levelSel.value);
+    if (formatSel?.value)   query = query.eq("format_size", formatSel.value);
 
     const { data: artists, error: artistsErr, count } = await query;
     if (artistsErr) {
@@ -150,7 +171,7 @@ async function runSearch(q, pageNum = 1) {
         .in("artist_id", artistIds);
 
       if (!profileErr) {
-        for (const row of profiles || []) {
+        for (const row of (profiles || [])) {
           if (!row.profile_image_url) continue;
           profileImageByArtist[row.artist_id] = row.profile_image_url;
         }
@@ -204,6 +225,16 @@ regionSel?.addEventListener("change", () => {
 });
 countrySel?.addEventListener("change", () => runSearch(inputEl.value, 1));
 genderSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+
+// NEW FILTER LISTENERS
+mediumSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+styleSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+themeSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+moodSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+paletteSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+levelSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+formatSel?.addEventListener("change", () => runSearch(inputEl.value, 1));
+
 prevBtn.addEventListener("click", () =>
   runSearch(lastQuery, Math.max(1, page - 1))
 );
@@ -217,4 +248,3 @@ nextBtn.addEventListener("click", () =>
   resetCountrySelect();
   runSearch("", 1);
 })();
-
