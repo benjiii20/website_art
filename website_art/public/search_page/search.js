@@ -43,8 +43,19 @@ const liveRegion  = document.getElementById("resultsStatus");
 const favoritesListEl = document.getElementById("favoritesList");
 const clearFavBtn = document.getElementById("clearFavorites");
 
+// NEW FILTER DOM REFS
+const mediumSel   = document.getElementById("filterMedium");    // Medium / Art Form
+const styleSel    = document.getElementById("filterStyle");     // Style / Aesthetic
+const themeSel    = document.getElementById("filterTheme");     // Themes / Content
+const moodSel     = document.getElementById("filterMood");      // Mood
+const paletteSel  = document.getElementById("filterPalette");   // Color Palette
+const levelSel    = document.getElementById("filterLevel");     // Artist Level
+const formatSel   = document.getElementById("filterFormat");    // Format / Size
+
 let page = 1;
 let lastQuery = "";
+const FAVORITES_KEY = "favorite_artists";
+let favorites = loadFavorites();
 
 // Region -> countries mapping
 const REGION_COUNTRIES = {
@@ -79,27 +90,107 @@ function populateCountries(region) {
 
 const PLACEHOLDER = "../sample_images/sample_img.png";
 
+// Favorites helpers (localStorage)
+function loadFavorites() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+function saveFavorites() {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+}
+function isFavorite(slug) {
+  return favorites.some(f => f.slug === slug);
+}
+function addFavorite(artist) {
+  if (isFavorite(artist.slug)) return;
+  favorites.push({
+    slug: artist.slug,
+    name: artist.name,
+    country: artist.country,
+    region_sub: artist.region_sub
+  });
+  saveFavorites();
+  renderFavorites();
+}
+function removeFavorite(slug) {
+  favorites = favorites.filter(f => f.slug !== slug);
+  saveFavorites();
+  renderFavorites();
+}
+function renderFavorites() {
+  if (!favoritesListEl) return;
+  favoritesListEl.innerHTML = "";
+  if (!favorites.length) {
+    favoritesListEl.innerHTML = `<span class="muted">No favorites yet. Tap a star to add.</span>`;
+    return;
+  }
+  favorites.forEach(fav => {
+    const pill = document.createElement("div");
+    pill.className = "favorite-pill";
+    pill.innerHTML = `
+      <div>
+        <a href="../artist_page/artist_page.html?slug=${encodeURIComponent(fav.slug)}">${fav.name}</a>
+        ${fav.country ? `<span>• ${fav.country}</span>` : ""}
+      </div>
+      <button aria-label="Remove ${fav.name} from favorites">×</button>
+    `;
+    pill.querySelector("button").addEventListener("click", () => removeFavorite(fav.slug));
+    favoritesListEl.appendChild(pill);
+  });
+}
+clearFavBtn?.addEventListener("click", () => {
+  favorites = [];
+  saveFavorites();
+  renderFavorites();
+});
+
 // Static artist card (no rotation)
 function artistCard(artist, imageUrl) {
-  const card = document.createElement("a");
+  const card = document.createElement("div");
   card.className = "artist-card";
-  card.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
 
   const safeLocation = [artist.country, artist.region_sub].filter(Boolean).join(" — ");
 
-  card.innerHTML = `
-    <div class="art-image">
-      <img alt="${artist.name}" loading="lazy" />
-    </div>
-    <div class="artist-info">
-      <h3>${artist.name}</h3>
-      ${safeLocation ? `<p>${safeLocation}</p>` : ""}
-    </div>
-  `;
+  const favBtn = document.createElement("button");
+  favBtn.type = "button";
+  favBtn.className = "fav-btn";
 
-  const imgEl = card.querySelector(".art-image img");
+  const link = document.createElement("a");
+  link.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
+  link.innerHTML = `
+      <div class="art-image">
+        <img alt="${artist.name}" loading="lazy" />
+      </div>
+      <div class="artist-info">
+        <h3>${artist.name}</h3>
+        ${safeLocation ? `<p>${safeLocation}</p>` : ""}
+      </div>
+    `;
+
+  const imgEl = link.querySelector(".art-image img");
   imgEl.src = imageUrl || PLACEHOLDER;
 
+  function syncFav() {
+    const active = isFavorite(artist.slug);
+    favBtn.dataset.active = active ? "true" : "false";
+    favBtn.innerHTML = active ? "★" : "☆";
+    favBtn.title = active ? "Remove from favorites" : "Add to favorites";
+    favBtn.setAttribute("aria-pressed", active ? "true" : "false");
+  }
+  favBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isFavorite(artist.slug)) removeFavorite(artist.slug);
+    else addFavorite(artist);
+    syncFav();
+  });
+  syncFav();
+
+  card.appendChild(favBtn);
+  card.appendChild(link);
   return card;
 }
 
@@ -239,6 +330,6 @@ nextBtn.addEventListener("click", () =>
   const ok = await ensureSignedIn();
   if (!ok) return;
   resetCountrySelect();
+  renderFavorites();
   runSearch("", 1);
 })();
-
