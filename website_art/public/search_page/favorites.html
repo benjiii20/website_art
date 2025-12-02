@@ -57,13 +57,29 @@
           status.textContent = "Error loading favorites: " + error.message;
           return [];
         }
-        return (data || []).map(row => ({
+        const list = (data || []).map(row => ({
           slug: row.artist?.slug,
           name: row.artist?.name,
           country: row.artist?.country,
           region: row.artist?.region_sub,
           artist_id: row.artist_id
         }));
+
+        // Fetch profile images for these artists
+        const ids = list.map(l => l.artist_id).filter(Boolean);
+        const profileMap = {};
+        if (ids.length) {
+          const { data: pics, error: picErr } = await supa
+            .from("v_artist_profile_image")
+            .select("artist_id, profile_image_url")
+            .in("artist_id", ids);
+          if (!picErr) {
+            (pics || []).forEach(p => { if (p.profile_image_url) profileMap[p.artist_id] = p.profile_image_url; });
+          } else {
+            console.warn("Profile image fetch error:", picErr.message);
+          }
+        }
+        return list.map(item => ({ ...item, image_url: profileMap[item.artist_id] }));
       }
 
       async function removeFavorite(artistId) {
@@ -91,12 +107,13 @@
         }
         status.textContent = `Showing ${list.length} favorites.`;
         list.forEach(fav => {
+          const imgSrc = fav.image_url || "../sample_images/sample_img.png";
           const card = document.createElement("div");
           card.className = "artist-card";
           card.innerHTML = `
             <a class="card-link" href="../artist_page/artist_page.html?slug=${encodeURIComponent(fav.slug || "")}">
-              <div class="art-image" style="display:grid;place-items:center;background:#08080a;">
-                <div style="color:var(--muted);font-size:2rem;">★</div>
+              <div class="art-image">
+                <img src="${imgSrc}" alt="${fav.name || 'Artwork'}" loading="lazy" />
               </div>
               <div class="artist-info">
                 <h3>${fav.name || 'Untitled'}</h3>
