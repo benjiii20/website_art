@@ -103,6 +103,45 @@ create trigger trg_single_profile_artwork_upd
 before update on public.artworks
 for each row execute function public.ensure_single_profile_artwork();
 
+-- ==============================
+-- Favorites (per-user, per-artist)
+-- ==============================
+create table if not exists public.favorites (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade,
+  artist_id  uuid not null references public.artists(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (user_id, artist_id)
+);
+
+alter table public.favorites enable row level security;
+
+-- Drop policies if they exist
+drop policy if exists "user can read own favorites" on public.favorites;
+drop policy if exists "user can insert own favorites" on public.favorites;
+drop policy if exists "user can delete own favorites" on public.favorites;
+
+create policy "user can read own favorites"
+on public.favorites
+for select
+to authenticated
+using (user_id = auth.uid());
+
+create policy "user can insert own favorites"
+on public.favorites
+for insert
+to authenticated
+with check (user_id = auth.uid());
+
+create policy "user can delete own favorites"
+on public.favorites
+for delete
+to authenticated
+using (user_id = auth.uid());
+
+create index if not exists idx_favorites_user on public.favorites(user_id);
+create index if not exists idx_favorites_artist on public.favorites(artist_id);
+
 -- ==========================
 -- Admins table (Option A)
 -- ==========================
@@ -346,4 +385,3 @@ returns text language sql immutable as $$
            '[^a-z0-9]+', '-', 'g'
          )
 $$;
-

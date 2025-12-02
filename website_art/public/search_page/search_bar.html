@@ -34,17 +34,15 @@
           class="search-input"
           aria-label="Search artists by name, region, or country"
         />
-
-        <section class="favorites-box" aria-label="Favorite artists">
-          <div class="favorites-header">
-            <h2>Favorites</h2>
-            <button id="clearFavorites" type="button" class="fav-clear">Clear</button>
-          </div>
-          <div id="favoritesList" class="favorites-list" aria-live="polite"></div>
-        </section>
+        <div class="icon-row">
+          <button id="toggleFilters" class="icon-button" type="button" aria-expanded="true" aria-controls="filtersPanel" aria-label="Toggle filters" title="Filters">
+            ☰
+          </button>
+          <a class="icon-button" href="favorites.html" aria-label="Go to favorites" title="Favorites">★</a>
+        </div>
       </div>
 
-      <div class="filters">
+      <div class="filters" id="filtersPanel">
         <!-- Region / Country / Gender -->
         <select id="filterRegion" aria-label="Filter by region">
           <option value="">Region</option>

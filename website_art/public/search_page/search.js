@@ -19,6 +19,7 @@ async function ensureSignedIn() {
       location.href = "/admin.html";
       return false;
     }
+    currentUserId = session.user.id;
     return true;
   } catch {
     location.href = "/admin.html";
@@ -40,8 +41,6 @@ const regionSel   = document.getElementById("filterRegion");
 const countrySel  = document.getElementById("filterCountry");
 const genderSel   = document.getElementById("filterGender");
 const liveRegion  = document.getElementById("resultsStatus");
-const favoritesListEl = document.getElementById("favoritesList");
-const clearFavBtn = document.getElementById("clearFavorites");
 
 // NEW FILTER DOM REFS
 const mediumSel   = document.getElementById("filterMedium");    // Medium / Art Form
@@ -51,11 +50,14 @@ const moodSel     = document.getElementById("filterMood");      // Mood
 const paletteSel  = document.getElementById("filterPalette");   // Color Palette
 const levelSel    = document.getElementById("filterLevel");     // Artist Level
 const formatSel   = document.getElementById("filterFormat");    // Format / Size
+const filtersPanel = document.getElementById("filtersPanel");
+const filtersToggle = document.getElementById("toggleFilters");
 
 let page = 1;
 let lastQuery = "";
 const FAVORITES_KEY = "favorite_artists";
-let favorites = loadFavorites();
+let favorites = new Set();
+let currentUserId = null;
 
 // Region -> countries mapping
 const REGION_COUNTRIES = {
@@ -90,62 +92,59 @@ function populateCountries(region) {
 
 const PLACEHOLDER = "../sample_images/sample_img.png";
 
-// Favorites helpers (localStorage)
-function loadFavorites() {
-  try {
-    return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || [];
-  } catch {
-    return [];
-  }
+// Favorites helpers (Supabase-backed)
+function loadFavoritesLocal() {
+  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; }
+  catch { return []; }
 }
-function saveFavorites() {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+function saveFavoritesLocal(list) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
 }
-function isFavorite(slug) {
-  return favorites.some(f => f.slug === slug);
+function isFavoriteId(id) {
+  return favorites.has(id);
 }
-function addFavorite(artist) {
-  if (isFavorite(artist.slug)) return;
-  favorites.push({
-    slug: artist.slug,
-    name: artist.name,
-    country: artist.country,
-    region_sub: artist.region_sub
-  });
-  saveFavorites();
-  renderFavorites();
-}
-function removeFavorite(slug) {
-  favorites = favorites.filter(f => f.slug !== slug);
-  saveFavorites();
-  renderFavorites();
-}
-function renderFavorites() {
-  if (!favoritesListEl) return;
-  favoritesListEl.innerHTML = "";
-  if (!favorites.length) {
-    favoritesListEl.innerHTML = `<span class="muted">No favorites yet. Tap a star to add.</span>`;
+async function fetchFavorites() {
+  favorites = new Set();
+  if (!currentUserId) return;
+  const { data, error } = await supa
+    .from("favorites")
+    .select("artist_id")
+    .eq("user_id", currentUserId);
+  if (error) {
+    console.warn("Favorites fetch error:", error.message);
+    // fallback to local if present
+    loadFavoritesLocal().forEach(f => f.id && favorites.add(f.id));
     return;
   }
-  favorites.forEach(fav => {
-    const pill = document.createElement("div");
-    pill.className = "favorite-pill";
-    pill.innerHTML = `
-      <div>
-        <a href="../artist_page/artist_page.html?slug=${encodeURIComponent(fav.slug)}">${fav.name}</a>
-        ${fav.country ? `<span>• ${fav.country}</span>` : ""}
-      </div>
-      <button aria-label="Remove ${fav.name} from favorites">×</button>
-    `;
-    pill.querySelector("button").addEventListener("click", () => removeFavorite(fav.slug));
-    favoritesListEl.appendChild(pill);
-  });
+  (data || []).forEach(row => favorites.add(row.artist_id));
+  // keep a local cache for offline-ish
+  saveFavoritesLocal(Array.from(favorites).map(id => ({ id })));
 }
-clearFavBtn?.addEventListener("click", () => {
-  favorites = [];
-  saveFavorites();
-  renderFavorites();
-});
+async function addFavorite(artist) {
+  if (!currentUserId) return;
+  if (favorites.has(artist.id)) return;
+  favorites.add(artist.id);
+  const { error } = await supa.from("favorites").insert({
+    user_id: currentUserId,
+    artist_id: artist.id
+  });
+  if (error) {
+    favorites.delete(artist.id);
+    console.error("Add favorite error:", error.message);
+  }
+}
+async function removeFavorite(id) {
+  if (!currentUserId) return;
+  favorites.delete(id);
+  const { error } = await supa
+    .from("favorites")
+    .delete()
+    .eq("user_id", currentUserId)
+    .eq("artist_id", id);
+  if (error) {
+    console.error("Remove favorite error:", error.message);
+  }
+}
 
 // Static artist card (no rotation)
 function artistCard(artist, imageUrl) {
@@ -174,17 +173,17 @@ function artistCard(artist, imageUrl) {
   imgEl.src = imageUrl || PLACEHOLDER;
 
   function syncFav() {
-    const active = isFavorite(artist.slug);
+    const active = isFavoriteId(artist.id);
     favBtn.dataset.active = active ? "true" : "false";
     favBtn.innerHTML = active ? "★" : "☆";
     favBtn.title = active ? "Remove from favorites" : "Add to favorites";
     favBtn.setAttribute("aria-pressed", active ? "true" : "false");
   }
-  favBtn.addEventListener("click", (e) => {
+  favBtn.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (isFavorite(artist.slug)) removeFavorite(artist.slug);
-    else addFavorite(artist);
+    if (isFavoriteId(artist.id)) await removeFavorite(artist.id);
+    else await addFavorite(artist);
     syncFav();
   });
   syncFav();
@@ -326,10 +325,16 @@ nextBtn.addEventListener("click", () =>
   runSearch(lastQuery, page + 1)
 );
 
+filtersToggle?.addEventListener("click", () => {
+  const isOpen = filtersPanel?.classList.toggle("hidden") === false;
+  const nowOpen = !(filtersPanel?.classList.contains("hidden"));
+  filtersToggle.setAttribute("aria-expanded", nowOpen ? "true" : "false");
+});
+
 (async function init() {
   const ok = await ensureSignedIn();
   if (!ok) return;
   resetCountrySelect();
-  renderFavorites();
+  await fetchFavorites();
   runSearch("", 1);
 })();

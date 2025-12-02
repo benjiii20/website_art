@@ -43,6 +43,24 @@ body{
   align-items:flex-start;
   width:100%;
 }
+.icon-row{display:flex;gap:8px;align-items:center;}
+.icon-button{
+  flex:0 0 auto;
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:12px;
+  border:1px solid var(--line);
+  background:var(--chip);
+  color:var(--ink);
+  font-size:1.4rem;
+  text-decoration:none;
+  cursor:pointer;
+  transition:background .15s ease, transform .05s ease, border-color .15s ease;
+}
+.icon-button:hover{background:rgba(255,255,255,.06);}
+.icon-button:active{transform:translateY(1px);}
 
 .search-input{
   flex:1 1 320px;
@@ -76,79 +94,9 @@ body{
   border-color:#2a2b30;
   box-shadow:0 0 0 3px rgba(255,255,255,.05);
 }
+.hidden{display:none;}
 
 /* Favorites */
-.favorites-box{
-  flex:0 0 320px;
-  max-width:360px;
-  min-width:260px;
-  background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.02)), var(--panel);
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:12px 14px;
-  box-shadow:var(--shadow);
-}
-.favorites-header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  margin-bottom:8px;
-}
-.favorites-header h2{
-  margin:0;
-  font-size:1rem;
-  color:var(--accent);
-  letter-spacing:0.01em;
-  font-family:"Playfair Display", serif;
-}
-.fav-clear{
-  background:var(--chip);
-  border:1px solid var(--line);
-  color:var(--muted);
-  border-radius:10px;
-  padding:6px 10px;
-  font-size:.9rem;
-  cursor:pointer;
-}
-.fav-clear:hover{filter:brightness(1.05);}
-.favorites-list{
-  display:flex;
-  flex-direction:column;
-  gap:8px;
-  min-height:32px;
-}
-.favorite-pill{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:8px;
-  padding:8px 10px;
-  border-radius:10px;
-  border:1px solid var(--line);
-  background:var(--chip);
-}
-.favorite-pill a{
-  color:var(--accent);
-  text-decoration:none;
-  font-weight:600;
-}
-.favorite-pill span{
-  color:var(--muted);
-  font-size:.9rem;
-}
-.favorite-pill button{
-  background:none;
-  border:0;
-  color:var(--muted);
-  cursor:pointer;
-  font-size:1rem;
-  line-height:1;
-  padding:0 4px;
-  transition:color .15s ease;
-}
-.favorite-pill button:hover{color:var(--accent);}
-
 /* Grid */
 .results-grid{
   display:grid;
@@ -178,6 +126,7 @@ body{
   border-color:#2a2b30;
   outline:none;
 }
+.artist-card .card-link{display:block;color:inherit;text-decoration:none;height:100%;}
 
 /* Image area */
 .art-image{
