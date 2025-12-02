@@ -7,6 +7,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="search_styles.css" />
+  <style>
+    /* Slightly tighter cards on favorites page */
+    .favorites-compact{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+    .favorites-compact .artist-card{max-width:260px;margin:0 auto;}
+    .favorites-compact .artist-info h3{font-size:1rem;}
+  </style>
   <script>
     window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
     window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
@@ -27,7 +33,7 @@
     </header>
 
     <div id="favStatus" class="muted" aria-live="polite" style="margin:12px 0;"></div>
-    <div id="favGrid" class="results-grid"></div>
+    <div id="favGrid" class="results-grid favorites-compact"></div>
   </div>
 
   <script>
