@@ -19,7 +19,6 @@ async function ensureSignedIn() {
       location.href = "/admin.html";
       return false;
     }
-    currentUserId = session.user.id;
     return true;
   } catch {
     location.href = "/admin.html";
@@ -55,11 +54,7 @@ const filtersToggle = document.getElementById("toggleFilters");
 
 let page = 1;
 let lastQuery = "";
-const FAVORITES_KEY = "favorite_artists";
-let favorites = new Set();
-let currentUserId = null;
 
-// Region -> countries mapping
 const REGION_COUNTRIES = {
   "North Africa": ["Algeria","Egypt","Libya","Morocco","Sudan","Tunisia"],
   "West Africa": ["Benin","Burkina Faso","Cabo Verde","Côte d’Ivoire","Gambia","Ghana","Guinea","Guinea-Bissau","Liberia","Mali","Mauritania","Niger","Nigeria","Senegal","Sierra Leone","Togo"],
@@ -92,73 +87,16 @@ function populateCountries(region) {
 
 const PLACEHOLDER = "../sample_images/sample_img.png";
 
-// Favorites helpers (Supabase-backed)
-function loadFavoritesLocal() {
-  try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; }
-  catch { return []; }
-}
-function saveFavoritesLocal(list) {
-  localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
-}
-function isFavoriteId(id) {
-  return favorites.has(id);
-}
-async function fetchFavorites() {
-  favorites = new Set();
-  if (!currentUserId) return;
-  const { data, error } = await supa
-    .from("favorites")
-    .select("artist_id")
-    .eq("user_id", currentUserId);
-  if (error) {
-    console.warn("Favorites fetch error:", error.message);
-    // fallback to local if present
-    loadFavoritesLocal().forEach(f => f.id && favorites.add(f.id));
-    return;
-  }
-  (data || []).forEach(row => favorites.add(row.artist_id));
-  // keep a local cache for offline-ish
-  saveFavoritesLocal(Array.from(favorites).map(id => ({ id })));
-}
-async function addFavorite(artist) {
-  if (!currentUserId) return;
-  if (favorites.has(artist.id)) return;
-  favorites.add(artist.id);
-  const { error } = await supa.from("favorites").insert({
-    user_id: currentUserId,
-    artist_id: artist.id
-  });
-  if (error) {
-    favorites.delete(artist.id);
-    console.error("Add favorite error:", error.message);
-  }
-}
-async function removeFavorite(id) {
-  if (!currentUserId) return;
-  favorites.delete(id);
-  const { error } = await supa
-    .from("favorites")
-    .delete()
-    .eq("user_id", currentUserId)
-    .eq("artist_id", id);
-  if (error) {
-    console.error("Remove favorite error:", error.message);
-  }
-}
-
-// Static artist card (no rotation)
+// Static artist card (no favorites icon)
 function artistCard(artist, imageUrl) {
   const card = document.createElement("div");
   card.className = "artist-card";
 
   const safeLocation = [artist.country, artist.region_sub].filter(Boolean).join(" — ");
 
-  const favBtn = document.createElement("button");
-  favBtn.type = "button";
-  favBtn.className = "fav-btn";
-
   const link = document.createElement("a");
   link.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
+  link.className = "card-link";
   link.innerHTML = `
       <div class="art-image">
         <img alt="${artist.name}" loading="lazy" />
@@ -172,23 +110,6 @@ function artistCard(artist, imageUrl) {
   const imgEl = link.querySelector(".art-image img");
   imgEl.src = imageUrl || PLACEHOLDER;
 
-  function syncFav() {
-    const active = isFavoriteId(artist.id);
-    favBtn.dataset.active = active ? "true" : "false";
-    favBtn.innerHTML = active ? "★" : "☆";
-    favBtn.title = active ? "Remove from favorites" : "Add to favorites";
-    favBtn.setAttribute("aria-pressed", active ? "true" : "false");
-  }
-  favBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (isFavoriteId(artist.id)) await removeFavorite(artist.id);
-    else await addFavorite(artist);
-    syncFav();
-  });
-  syncFav();
-
-  card.appendChild(favBtn);
   card.appendChild(link);
   return card;
 }
@@ -202,7 +123,10 @@ async function runSearch(q, pageNum = 1) {
   try {
     // 1) Fetch artists (published only, matches your RLS)
     let query = supa.from("artists")
-      .select("id,name,slug,bio,country,region_sub,gender,medium,style,theme,mood,color_palette,artist_level,format_size", { count: "exact" })
+      .select(
+        "id,name,slug,bio,country,region_sub,gender,medium,style,theme,mood,color_palette,artist_level,format_size",
+        { count: "exact" }
+      )
       .eq("is_published", true)
       .order("created_at", { ascending: false })
       .range(from, to);
@@ -326,8 +250,7 @@ nextBtn.addEventListener("click", () =>
 );
 
 filtersToggle?.addEventListener("click", () => {
-  const isOpen = filtersPanel?.classList.toggle("hidden") === false;
-  const nowOpen = !(filtersPanel?.classList.contains("hidden"));
+  const nowOpen = !(filtersPanel?.classList.toggle("hidden"));
   filtersToggle.setAttribute("aria-expanded", nowOpen ? "true" : "false");
 });
 
@@ -335,6 +258,5 @@ filtersToggle?.addEventListener("click", () => {
   const ok = await ensureSignedIn();
   if (!ok) return;
   resetCountrySelect();
-  await fetchFavorites();
   runSearch("", 1);
 })();

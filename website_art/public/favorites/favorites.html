@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Favorite Artists</title>
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS lives in ../search_page/ -->
+  <link rel="stylesheet" href="../search_page/search_styles.css" />
+
+  <style>
+    /* Make this page background a flat black (overrides search_styles gradient) */
+    body{
+      background:#070708;
+    }
+
+    /* Page header */
+    .favorites-page-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .favorites-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+    }
+
+    /* Clear button */
+    .fav-clear{
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--chip);
+      color:var(--muted);
+      font-size:.9rem;
+      cursor:pointer;
+      transition:filter .15s ease, transform .02s ease;
+    }
+    .fav-clear:hover{filter:brightness(1.06);}
+    .fav-clear:active{transform:translateY(1px);}
+    .fav-clear:disabled{opacity:.5;cursor:default;}
+
+    /* Slightly tighter cards on favorites page */
+    .favorites-compact{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+    .favorites-compact .artist-card{max-width:260px;margin:0 auto;}
+    .favorites-compact .artist-info h3{font-size:1rem;}
+
+    /* Favorite remove button on each card */
+    .fav-btn{
+      position:absolute;
+      top:10px;
+      right:10px;
+      border:1px solid var(--line);
+      background:rgba(0,0,0,.35);
+      color:var(--accent);
+      border-radius:999px;
+      width:32px;
+      height:32px;
+      display:grid;
+      place-items:center;
+      cursor:pointer;
+      font-size:1.1rem;
+      backdrop-filter:blur(2px);
+      transition:background .15s ease, transform .1s ease, border-color .15s ease;
+    }
+    .fav-btn:hover{background:rgba(255,255,255,.08);}
+    .fav-btn[data-active="true"]{
+      background:rgba(0,0,0,.35);
+      border-color:var(--ink);
+      color:var(--ink);
+    }
+  </style>
+
+  <script>
+    window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="search-container">
+    <header class="favorites-page-header">
+      <div>
+        <h1 style="margin:0;color:var(--ink);font-family:'Playfair Display',serif;">Favorite Artists</h1>
+      </div>
+      <div class="favorites-actions">
+        <!-- back home -->
+        <a class="icon-button" href="../search_page/search_bar.html" aria-label="Back to search">⌂</a>
+        <button id="favClear" class="fav-clear">Clear all</button>
+      </div>
+    </header>
+
+    <div id="favStatus" class="muted" aria-live="polite" style="margin:12px 0;"></div>
+    <div id="favGrid" class="results-grid favorites-compact"></div>
+  </div>
+
+  <script>
+    (async function() {
+      const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      const grid = document.getElementById("favGrid");
+      const status = document.getElementById("favStatus");
+      const clearBtn = document.getElementById("favClear");
+
+      const FAVORITES_KEY = "favorite_artists";
+
+      let userId = null;
+      let mode = "local"; // "account" (Supabase) or "local" (localStorage)
+
+      function loadFavoritesLocal() {
+        try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; }
+        catch { return []; }
+      }
+      function saveFavoritesLocal(list) {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+      }
+
+      async function detectSessionUser() {
+        try {
+          const { data: { session } } = await supa.auth.getSession();
+          return session?.user?.id || null;
+        } catch {
+          return null;
+        }
+      }
+
+      async function loadFavorites() {
+        // Supabase account mode
+        if (mode === "account" && userId) {
+          const { data, error } = await supa
+            .from("favorites")
+            .select("artist_id, created_at, artist:artists(id,name,slug,country,region_sub)")
+            .eq("user_id", userId)
+            .order("created_at", { ascending: false });
+
+          if (error) {
+            status.textContent = "Error loading favorites: " + error.message;
+            return [];
+          }
+
+          const list = (data || []).map(row => ({
+            slug: row.artist?.slug,
+            name: row.artist?.name,
+            country: row.artist?.country,
+            region: row.artist?.region_sub,
+            artist_id: row.artist_id
+          }));
+
+          // Fetch profile images
+          const ids = list.map(l => l.artist_id).filter(Boolean);
+          const profileMap = {};
+          if (ids.length) {
+            const { data: pics, error: picErr } = await supa
+              .from("v_artist_profile_image")
+              .select("artist_id, profile_image_url")
+              .in("artist_id", ids);
+            if (!picErr) {
+              (pics || []).forEach(p => {
+                if (p.profile_image_url) profileMap[p.artist_id] = p.profile_image_url;
+              });
+            } else {
+              console.warn("Profile image fetch error:", picErr.message);
+            }
+          }
+
+          return list.map(item => ({ ...item, image_url: profileMap[item.artist_id] }));
+        }
+
+        // Local-only mode: favorites stored in localStorage as { id }
+        const localFavs = loadFavoritesLocal(); // [{id}]
+        const ids = localFavs.map(f => f.id).filter(Boolean);
+        if (!ids.length) return [];
+
+        // Fetch artists by ID
+        const { data: artists, error: artistErr } = await supa
+          .from("artists")
+          .select("id,name,slug,country,region_sub")
+          .in("id", ids);
+
+        if (artistErr) {
+          status.textContent = "Error loading local favorites: " + artistErr.message;
+          return [];
+        }
+
+        const artistMap = {};
+        (artists || []).forEach(a => { artistMap[a.id] = a; });
+
+        // Fetch profile images
+        const profileMap = {};
+        const { data: pics, error: picErr } = await supa
+          .from("v_artist_profile_image")
+          .select("artist_id, profile_image_url")
+          .in("artist_id", ids);
+
+        if (!picErr) {
+          (pics || []).forEach(p => {
+            if (p.profile_image_url) profileMap[p.artist_id] = p.profile_image_url;
+          });
+        } else {
+          console.warn("Profile image fetch error:", picErr.message);
+        }
+
+        // Preserve local order
+        return localFavs
+          .map(f => {
+            const a = artistMap[f.id];
+            if (!a) return null;
+            return {
+              slug: a.slug,
+              name: a.name,
+              country: a.country,
+              region: a.region_sub,
+              artist_id: a.id,
+              image_url: profileMap[a.id]
+            };
+          })
+          .filter(Boolean);
+      }
+
+      async function removeFavorite(artistId) {
+        if (!artistId) return;
+
+        if (mode === "account" && userId) {
+          const { error } = await supa
+            .from("favorites")
+            .delete()
+            .eq("user_id", userId)
+            .eq("artist_id", artistId);
+          if (error) console.error("Remove favorite error:", error.message);
+        } else {
+          const localFavs = loadFavoritesLocal();
+          const updated = localFavs.filter(f => f.id !== artistId);
+          saveFavoritesLocal(updated);
+        }
+      }
+
+      async function clearAll() {
+        if (mode === "account" && userId) {
+          const { error } = await supa
+            .from("favorites")
+            .delete()
+            .eq("user_id", userId);
+          if (error) {
+            status.textContent = "Error clearing favorites: " + error.message;
+            return;
+          }
+        } else {
+          saveFavoritesLocal([]);
+        }
+      }
+
+      function render(list) {
+        grid.innerHTML = "";
+        const count = list.length;
+
+        // Clear button state
+        clearBtn.disabled = count === 0;
+
+        if (!count) {
+          status.textContent = "No favorites yet. Go back and tap the star on any artist.";
+          return;
+        }
+
+        status.textContent = `Showing ${count} favorites.`;
+
+        list.forEach(fav => {
+          const imgSrc = fav.image_url || "../sample_images/sample_img.png";
+          const card = document.createElement("div");
+          card.className = "artist-card";
+          card.innerHTML = `
+            <a class="card-link" href="../artist_page/artist_page.html?slug=${encodeURIComponent(fav.slug || "")}">
+              <div class="art-image">
+                <img src="${imgSrc}" alt="${fav.name || 'Artwork'}" loading="lazy" />
+              </div>
+              <div class="artist-info">
+                <h3>${fav.name || 'Untitled'}</h3>
+                ${fav.country ? `<p>${fav.country}${fav.region ? " — " + fav.region : ""}</p>` : ""}
+              </div>
+            </a>
+            <button class="fav-btn" aria-label="Remove ${fav.name || 'artist'} from favorites" data-active="true">×</button>
+          `;
+          card.querySelector(".fav-btn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await removeFavorite(fav.artist_id);
+            const updated = await loadFavorites();
+            render(updated);
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      clearBtn?.addEventListener("click", async () => {
+        await clearAll();
+        const updated = await loadFavorites();
+        render(updated);
+      });
+
+      // ==== init ====
+      userId = await detectSessionUser();
+      mode = userId ? "account" : "local";
+
+      const list = await loadFavorites();
+      render(list);
+    })();
+  </script>
+</body>
+</html>

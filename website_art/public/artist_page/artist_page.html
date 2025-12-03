@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,15 +24,28 @@
     <a href="../search_page/search_bar.html" class="back-btn" aria-label="Back to search page">‹</a>
 
     <header class="artist-header">
-      <h1 class="artist-title">
-        <a id="artistLink" class="artist-title-link" href="#" aria-label="Open artist bio">
-          <span id="artistName"></span>
-        </a>
-      </h1>
-      <p id="artistMeta" class="artist-meta"></p>
+      <div class="artist-header-main">
+        <h1 class="artist-title">
+          <a id="artistLink" class="artist-title-link" href="#" aria-label="Open artist bio">
+            <span id="artistName"></span>
+          </a>
+        </h1>
+        <p id="artistMeta" class="artist-meta"></p>
+      </div>
+
+      <!-- Favorites button in the header -->
+      <button
+        id="favoriteBtn"
+        class="artist-fav-btn"
+        type="button"
+        aria-pressed="false"
+        title="Add to favorites"
+      >
+        ☆
+      </button>
     </header>
 
-    <p id="artistBio" class="artist-bio"></p>
+    <!-- bio removed -->
 
     <div class="gallery" aria-label="Artwork gallery">
       <div class="track" id="track"></div>
@@ -54,6 +66,16 @@
       const root = document.getElementById('artistRoot');
       const showError = (msg) => { root.innerHTML = `<p class="error">${msg}</p>`; };
 
+      // Local favorites cache key (for logged-out users)
+      const FAVORITES_KEY = "favorite_artists";
+      const loadFavoritesLocal = () => {
+        try { return JSON.parse(localStorage.getItem(FAVORITES_KEY)) || []; }
+        catch { return []; }
+      };
+      const saveFavoritesLocal = (list) => {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(list));
+      };
+
       // 0) slug from URL
       const params = new URLSearchParams(location.search);
       const slug = params.get('slug');
@@ -70,7 +92,6 @@
         .eq('is_published', true)
         .maybeSingle();
 
-
       if (artistErr) return showError('Error loading artist: ' + artistErr.message);
       if (!artist)   return showError('Artist not found or unpublished.');
 
@@ -78,9 +99,93 @@
       document.getElementById('artistName').textContent = artist.name || '';
       document.getElementById('artistMeta').textContent =
         [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
+
       const artistLink = document.getElementById('artistLink');
       artistLink.href = `../biopage/biopage.html?slug=${encodeURIComponent(artist.slug)}`;
       artistLink.setAttribute('aria-label', `Open bio for ${artist.name}`);
+
+      // === favorites on artist page ===
+      const favBtn = document.getElementById('favoriteBtn');
+      let isFavorite = false;
+      let currentUserId = null;
+
+      function syncFavButton() {
+        if (!favBtn) return;
+        favBtn.dataset.active = isFavorite ? "true" : "false";
+        favBtn.textContent = isFavorite ? "★" : "☆";
+        favBtn.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+        favBtn.title = isFavorite ? "Remove from favorites" : "Add to favorites";
+      }
+
+      async function initFavorite() {
+        if (!favBtn) return;
+
+        // Get auth session (if any)
+        try {
+          const { data: { session } } = await supa.auth.getSession();
+          if (session?.user) currentUserId = session.user.id;
+        } catch (err) {
+          console.warn("Auth session error:", err);
+        }
+
+        // Check if this artist is already a favorite
+        if (currentUserId) {
+          const { data, error } = await supa
+            .from("favorites")
+            .select("artist_id")
+            .eq("user_id", currentUserId)
+            .eq("artist_id", artist.id)
+            .maybeSingle();
+
+          if (!error && data?.artist_id) {
+            isFavorite = true;
+          }
+        } else {
+          // Fallback: local only
+          const local = loadFavoritesLocal();
+          isFavorite = local.some((f) => f.id === artist.id);
+        }
+
+        syncFavButton();
+
+        favBtn.addEventListener("click", async () => {
+          // If logged in, persist to Supabase
+          if (currentUserId) {
+            if (isFavorite) {
+              const { error } = await supa
+                .from("favorites")
+                .delete()
+                .eq("user_id", currentUserId)
+                .eq("artist_id", artist.id);
+              if (!error) isFavorite = false;
+            } else {
+              const { error } = await supa
+                .from("favorites")
+                .insert({ user_id: currentUserId, artist_id: artist.id });
+              if (!error) isFavorite = true;
+            }
+          } else {
+            // No auth: store favorites locally so UI still works
+            const local = loadFavoritesLocal();
+            if (isFavorite) {
+              const updated = local.filter((f) => f.id !== artist.id);
+              saveFavoritesLocal(updated);
+              isFavorite = false;
+            } else {
+              const updated = [
+                ...local.filter((f) => f.id !== artist.id),
+                { id: artist.id }
+              ];
+              saveFavoritesLocal(updated);
+              isFavorite = true;
+            }
+          }
+
+          syncFavButton();
+        });
+      }
+
+      await initFavorite();
 
       // 2) Fetch this artist's published artworks
       const { data: arts, error: artsErr } = await supa
@@ -96,6 +201,7 @@
       const track = document.getElementById('track');
       const previewOverlay = document.getElementById('previewOverlay');
       const previewImage   = document.getElementById('previewImage');
+
       const makeFig = (a) => {
         const fig = document.createElement('figure');
         fig.className = 'slide';
@@ -185,8 +291,8 @@
         isDragging = false;
         track.style.transition = '';
         const dx = currentX - startX;
-        if (dx > 40) prev();
-        else if (dx < -40) next();
+        if (dx > threshold) prev();
+        else if (dx < -threshold) next();
         else update();
       }
       track.addEventListener('touchend', endSwipe, { passive: true });
