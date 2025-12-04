@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Favorite Artists</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="search_styles.css" />
+  <style>
+    /* Slightly tighter cards on favorites page */
+    .favorites-compact{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
+    .favorites-compact .artist-card{max-width:260px;margin:0 auto;}
+    .favorites-compact .artist-info h3{font-size:1rem;}
+  </style>
+  <script>
+    window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <div class="search-container">
+    <header class="favorites-page-header">
+      <div>
+        <h1 style="margin:0;color:var(--ink);font-family:'Playfair Display',serif;">Favorite Artists</h1>
+        <p class="muted" style="margin:4px 0 0;">Saved locally on this device.</p>
+      </div>
+      <div class="favorites-actions">
+        <a class="icon-button" href="search_bar.html" aria-label="Back to search">⌂</a>
+        <button id="favClear" class="fav-clear">Clear all</button>
+      </div>
+    </header>
+
+    <div id="favStatus" class="muted" aria-live="polite" style="margin:12px 0;"></div>
+    <div id="favGrid" class="results-grid favorites-compact"></div>
+  </div>
+
+  <script>
+    (async function() {
+      const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      const grid = document.getElementById("favGrid");
+      const status = document.getElementById("favStatus");
+      const clearBtn = document.getElementById("favClear");
+      let userId = null;
+
+      async function requireSession() {
+        const { data: { session } } = await supa.auth.getSession();
+        if (!session?.user) {
+          location.href = "/admin.html";
+          return null;
+        }
+        return session.user.id;
+      }
+
+      async function loadFavorites() {
+        const { data, error } = await supa
+          .from("favorites")
+          .select("artist_id, created_at, artist:artists(id,name,slug,country,region_sub)")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+        if (error) {
+          status.textContent = "Error loading favorites: " + error.message;
+          return [];
+        }
+        const list = (data || []).map(row => ({
+          slug: row.artist?.slug,
+          name: row.artist?.name,
+          country: row.artist?.country,
+          region: row.artist?.region_sub,
+          artist_id: row.artist_id
+        }));
+
+        // Fetch profile images for these artists
+        const ids = list.map(l => l.artist_id).filter(Boolean);
+        const profileMap = {};
+        if (ids.length) {
+          const { data: pics, error: picErr } = await supa
+            .from("v_artist_profile_image")
+            .select("artist_id, profile_image_url")
+            .in("artist_id", ids);
+          if (!picErr) {
+            (pics || []).forEach(p => { if (p.profile_image_url) profileMap[p.artist_id] = p.profile_image_url; });
+          } else {
+            console.warn("Profile image fetch error:", picErr.message);
+          }
+        }
+        return list.map(item => ({ ...item, image_url: profileMap[item.artist_id] }));
+      }
+
+      async function removeFavorite(artistId) {
+        const { error } = await supa
+          .from("favorites")
+          .delete()
+          .eq("user_id", userId)
+          .eq("artist_id", artistId);
+        if (error) console.error("Remove favorite error:", error.message);
+      }
+
+      async function clearAll() {
+        const { error } = await supa
+          .from("favorites")
+          .delete()
+          .eq("user_id", userId);
+        if (error) status.textContent = "Error clearing favorites: " + error.message;
+      }
+
+      function render(list) {
+        grid.innerHTML = "";
+        if (!list.length) {
+          status.textContent = "No favorites yet. Go back and tap the star on any artist.";
+          return;
+        }
+        status.textContent = `Showing ${list.length} favorites.`;
+        list.forEach(fav => {
+          const imgSrc = fav.image_url || "../sample_images/sample_img.png";
+          const card = document.createElement("div");
+          card.className = "artist-card";
+          card.innerHTML = `
+            <a class="card-link" href="../artist_page/artist_page.html?slug=${encodeURIComponent(fav.slug || "")}">
+              <div class="art-image">
+                <img src="${imgSrc}" alt="${fav.name || 'Artwork'}" loading="lazy" />
+              </div>
+              <div class="artist-info">
+                <h3>${fav.name || 'Untitled'}</h3>
+                ${fav.country ? `<p>${fav.country}</p>` : ""}
+              </div>
+            </a>
+            <button class="fav-btn" aria-label="Remove ${fav.name || 'artist'}" data-active="true">×</button>
+          `;
+          card.querySelector(".fav-btn").addEventListener("click", async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            await removeFavorite(fav.artist_id);
+            const updated = await loadFavorites();
+            render(updated);
+          });
+          grid.appendChild(card);
+        });
+      }
+
+      clearBtn?.addEventListener("click", async () => {
+        await clearAll();
+        render([]);
+      });
+
+      userId = await requireSession();
+      if (!userId) return;
+      const list = await loadFavorites();
+      render(list);
+    })();
+  </script>
+</body>
+</html>
