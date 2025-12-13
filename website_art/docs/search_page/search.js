@@ -6,28 +6,54 @@ const pageSize = 12;
 // Supabase client
 const supabaseUrl = window.SUPABASE_URL;
 const supabaseKey = window.SUPABASE_ANON_KEY;
+const STORAGE_KEY = "sb-jhzlxmomyypgtkuwdvzn-auth-token";
+
+function pickAuthStorage() {
+  try {
+    const k = "sb-check";
+    localStorage.setItem(k, "1");
+    localStorage.removeItem(k);
+    return localStorage;
+  } catch (_) {}
+  try {
+    const k = "sb-check";
+    sessionStorage.setItem(k, "1");
+    sessionStorage.removeItem(k);
+    return sessionStorage;
+  } catch (_) {}
+  return undefined;
+}
+
 if (!window.supabase) {
   console.error('Supabase CDN not loaded.');
 }
-const supa = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supa = window.supabase.createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storageKey: STORAGE_KEY,
+    storage: pickAuthStorage(),
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+});
 
 // Auth guard (matches your RLS = authenticated only)
 async function ensureSignedIn() {
   try {
     const { data: { session } } = await supa.auth.getSession();
     if (!session?.user) {
-      location.href = "/admin.html";
+      location.href = "../login_page/login.html";
       return false;
     }
     return true;
   } catch {
-    location.href = "/admin.html";
+    location.href = "../login_page/login.html";
     return false;
   }
 }
 
 supa.auth.onAuthStateChange((event) => {
-  if (event === "SIGNED_OUT") location.href = "/admin.html";
+  if (event === "SIGNED_OUT") location.href = "../login_page/login.html";
 });
 
 // DOM references
@@ -159,7 +185,7 @@ async function runSearch(q, pageNum = 1) {
         artistsErr.code === "PGRST116" ||
         artistsErr.message?.toLowerCase().includes("permission denied")
       ) {
-        location.href = "/admin.html";
+        location.href = "../login_page/login.html";
         return;
       }
       listEl.innerHTML =

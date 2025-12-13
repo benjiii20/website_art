@@ -2,8 +2,8 @@
 :root{
 --bg:#0a0a0a; /* page background */
 --panel:#111214; /* card background */
---ink: #f0dc08;               /* primary text */
---muted: #fbf708; 
+--ink: #f2c34a;               /* primary text */
+--muted: #c99b33;
 --line:#242424; /* borders */
 --accent:#ffffff; /* accent/white */
 --radius:16px;
@@ -20,7 +20,7 @@ img{max-width:100%;display:block}
 /* Card */
 .login-card{width:min(420px, 92vw);background:linear-gradient(180deg, rgba(255,255,255,.018), rgba(0,0,0,.02)), var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:2.2rem 2rem;display:grid;justify-items:center;gap:1rem}
 .login-logo{width:min(320px, 80%);height:auto;filter:contrast(1.05) brightness(.96)}
-.brand{margin:0;font-family:"Playfair Display", serif;letter-spacing:.14em;text-transform:capitalize;font-weight:700}
+.brand{margin:0;font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;letter-spacing:.08em;text-transform:capitalize;font-weight:700}
 .sub{margin:0 0 .5rem 0;color:var(--muted);font-size:.95rem;text-align:center}
 
 /* Form */
@@ -30,8 +30,8 @@ img{max-width:100%;display:block}
 #loginForm input:focus{border-color:#3a3a3a;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
 
 /* Button */
-#loginBtn{padding:.9rem 1.1rem;border-radius:999px;border:1px solid #2a2a2a;background:#f2f2f2;color:#0d0d0e;font-weight:600;font-size:1rem;cursor:pointer;transition:filter .15s ease, transform .02s ease}
-#loginBtn:hover{filter:brightness(.95)}
+#loginBtn{padding:.9rem 1.1rem;border-radius:999px;border:1px solid var(--line);background:#0b0c0e;color:var(--ink);font-weight:600;font-size:1rem;cursor:pointer;transition:filter .15s ease, transform .02s ease}
+#loginBtn:hover{filter:brightness(1.08)}
 #loginBtn:active{transform:translateY(1px)}
 #loginBtn[disabled]{opacity:.6;cursor:wait}
 

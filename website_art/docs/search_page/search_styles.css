@@ -150,7 +150,7 @@ body{
   font-size:1.05rem;
   font-weight:600;
   color:var(--ink); /* use main gold instead of white */
-  font-family:"Playfair Display", serif;
+  font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
 .artist-info p{
@@ -206,4 +206,3 @@ body{
   color:var(--muted);
 }
 .empty b{color:var(--accent);}
-

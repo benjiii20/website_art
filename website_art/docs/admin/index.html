@@ -4,30 +4,62 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin — Art Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root { --gap: 12px; }
-  body { font-family: system-ui, Arial, sans-serif; margin: 24px; max-width: 1100px; }
-  h1, h2 { margin: 0 0 8px; }
+  :root {
+    --gap: 12px;
+    --bg: #070708;
+    --panel: #111214;
+    --ink: #f2c34a;
+    --muted: #c99b33;
+    --line: #151518;
+  }
+  body {
+    font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    margin: 24px auto;
+    max-width: 1100px;
+    padding: 0 16px 32px;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  h1, h2 { margin: 0 0 8px; color: var(--ink); }
   header { display:flex; align-items:center; justify-content:space-between; margin-bottom: 8px; }
-  section { margin: 24px 0; padding: 16px; border: 1px solid #eee; border-radius: 12px; }
+  section {
+    margin: 24px 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--panel);
+    box-shadow: 0 14px 36px rgba(0,0,0,.45);
+  }
   form { display:grid; gap: var(--gap); }
   .row { display:grid; grid-template-columns: 1fr 1fr; gap: var(--gap); }
   .row3 { display:grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--gap); }
-  input, select, textarea, button { padding:10px; font-size:14px; }
-  button { cursor:pointer; }
-  .muted { color:#666; font-size: 12px; }
-  .success { color: #137333; }
+  input, select, textarea, button {
+    padding:10px;
+    font-size:14px;
+    background: #0b0c0e;
+    border:1px solid var(--line);
+    color: var(--ink);
+  }
+  button { cursor:pointer; transition: filter .15s ease, transform .05s ease; }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: translateY(1px); }
+  .muted { color:var(--muted); font-size: 12px; }
+  .success { color: var(--ink); }
   .error { color:#b80606; }
   .stack { display:flex; gap:10px; align-items:center; flex-wrap: wrap; }
-  img.preview { width:88px; height:88px; object-fit:contain; border-radius:8px; border:1px solid #ddd; background:#000; }
-  table { width:100%; border-collapse:collapse; margin-top:10px; }
-  th, td { padding:8px; border-bottom:1px solid #eee; text-align:left; }
+  img.preview { width:88px; height:88px; object-fit:contain; border-radius:8px; border:1px solid var(--line); background:#000; }
+  table { width:100%; border-collapse:collapse; margin-top:10px; color: inherit; }
+  th, td { padding:8px; border-bottom:1px solid var(--line); text-align:left; }
   td.actions { width: 220px; }
-  .btn-secondary { background:#f4f4f4; border:1px solid #ddd; }
-  .btn-danger { background:#fee; border:1px solid #f6b; color:#a00; }
-  .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid #ddd; background:#fafafa; }
+  .btn-secondary { background:#0f1012; border:1px solid #2a2b30; color: var(--muted); }
+  .btn-danger { background:#140505; border:1px solid #b80606; color: var(--ink); }
+  .pill { padding:3px 8px; border-radius:999px; font-size:12px; border:1px solid var(--line); background:#0b0c0e; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -41,11 +73,11 @@
 
 <!-- 🔒 Admin-only gate -->
 <script type="module">
-  import { requireAdmin } from "/_auth/auth-guard.js";
+  import { requireAdmin } from "../_auth/auth-guard.js";
   (async () => {
     const s = await requireAdmin({
-      redirectIfNoSession: "/admin.html",
-      redirectIfNotAdmin: "/search_page/search_bar.html"
+      redirectIfNoSession: "./admin.html",
+      redirectIfNotAdmin: "../search_page/search_bar.html"
     });
     if (!s) return; // redirected if not admin
     const who = document.getElementById("whoami");
@@ -267,7 +299,28 @@
 
 <script>
   // ---------- Setup ----------  
-  const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+  function pickAuthStorage() {
+    try {
+      const k = "sb-check";
+      localStorage.setItem(k, "1");
+      localStorage.removeItem(k);
+      return localStorage;
+    } catch (_) {}
+    try {
+      const k = "sb-check";
+      sessionStorage.setItem(k, "1");
+      sessionStorage.removeItem(k);
+      return sessionStorage;
+    } catch (_) {}
+    return undefined;
+  }
+
+  const STORAGE_KEY = "sb-jhzlxmomyypgtkuwdvzn-auth-token";
+  const supa = window.supabase.createClient(
+    window.SUPABASE_URL,
+    window.SUPABASE_ANON_KEY,
+    { auth: { storageKey: STORAGE_KEY, storage: pickAuthStorage(), autoRefreshToken: true, persistSession: true, detectSessionInUrl: true } }
+  );
   const ARTWORKS_BUCKET = window.ARTWORKS_BUCKET || 'artworks';
 
   async function ensureSessionOrRedirect() {

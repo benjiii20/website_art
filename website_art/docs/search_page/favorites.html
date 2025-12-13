@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Favorite Artists</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="search_styles.css" />
   <style>
     /* Slightly tighter cards on favorites page */
@@ -23,7 +23,7 @@
   <div class="search-container">
     <header class="favorites-page-header">
       <div>
-        <h1 style="margin:0;color:var(--ink);font-family:'Playfair Display',serif;">Favorite Artists</h1>
+        <h1 style="margin:0;color:var(--ink);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-weight:700;">Favorite Artists</h1>
         <p class="muted" style="margin:4px 0 0;">Saved locally on this device.</p>
       </div>
       <div class="favorites-actions">
@@ -37,8 +37,29 @@
   </div>
 
   <script>
+    function pickAuthStorage() {
+      try {
+        const k = "sb-check";
+        localStorage.setItem(k, "1");
+        localStorage.removeItem(k);
+        return localStorage;
+      } catch (_) {}
+      try {
+        const k = "sb-check";
+        sessionStorage.setItem(k, "1");
+        sessionStorage.removeItem(k);
+        return sessionStorage;
+      } catch (_) {}
+      return undefined;
+    }
+
     (async function() {
-      const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+      const STORAGE_KEY = "sb-jhzlxmomyypgtkuwdvzn-auth-token";
+      const supa = window.supabase.createClient(
+        window.SUPABASE_URL,
+        window.SUPABASE_ANON_KEY,
+        { auth: { storageKey: STORAGE_KEY, storage: pickAuthStorage(), autoRefreshToken: true, persistSession: true, detectSessionInUrl: true } }
+      );
       const grid = document.getElementById("favGrid");
       const status = document.getElementById("favStatus");
       const clearBtn = document.getElementById("favClear");
@@ -47,7 +68,7 @@
       async function requireSession() {
         const { data: { session } } = await supa.auth.getSession();
         if (!session?.user) {
-          location.href = "/admin.html";
+          location.href = "../login_page/login.html";
           return null;
         }
         return session.user.id;

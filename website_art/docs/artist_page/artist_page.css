@@ -65,10 +65,10 @@ body {
 
 .artist-title {
   margin: 0 0 .25rem 0;
-  font-family: "Playfair Display", serif;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   font-size: clamp(1.8rem, 1.2rem + 2.2vw, 3rem);
   letter-spacing: .01em;
-  color: #fff;
+  color: var(--ink);
 }
 .artist-title-link {
   color: inherit;
@@ -108,13 +108,13 @@ body {
 
 .artist-fav-btn:hover {
   background: rgba(242, 195, 74, 0.15); /* soft gold glow */
-  color: #ffffff;
+  color: var(--ink);
 }
 
 .artist-fav-btn[data-active="true"] {
   background: rgba(242, 195, 74, 0.18);
   border-color: var(--ink);
-  color: #ffffff;
+  color: var(--ink);
 }
 
 /* ===== Framed gallery (NO EDGE — stage melts into page) ===== */
@@ -186,7 +186,7 @@ body {
   transform: translateY(-50%);
   border: 1px solid rgba(0,0,0,.4);      /* keep a subtle edge so buttons are visible */
   background: rgba(10,10,10,.6);         /* subtle glassy button */
-  color: #fff;
+  color: var(--ink);
   width: calc(40px * var(--scale));
   height: calc(40px * var(--scale));
   font-size: calc(1.4rem * var(--scale));
@@ -247,7 +247,7 @@ body {
 }
 .back-btn:hover {
   background: rgba(242, 195, 74, 0.12);  /* soft gold glow */
-  color: #ffffff;
+  color: var(--ink);
   border-color: var(--bg);               /* still matches background */
 }
 
@@ -290,4 +290,3 @@ body {
     0 0 0 1px #070708,
     0 0 32px rgba(158, 158, 158, 0.10);
 }
-
