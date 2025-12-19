@@ -4,6 +4,7 @@ const SUPABASE_URL = "https://jhzlxmomyypgtkuwdvzn.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0";
 const STORAGE_KEY = "sb-jhzlxmomyypgtkuwdvzn-auth-token";
+const LOGIN_TIMEOUT_MS = 12000;
 
 // Prefer localStorage, fall back to sessionStorage (Safari private mode blocks localStorage writes).
 function pickAuthStorage() {
@@ -28,7 +29,8 @@ const emailInput = document.getElementById("loginEmail");
 const passwordInput = document.getElementById("loginPassword");
 const loginBtn = document.getElementById("loginBtn");
 
-const supabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+// Avoid clobbering the global "supabase" provided by the CDN
+const supaClient = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     storageKey: STORAGE_KEY,
     storage: pickAuthStorage(),
@@ -38,30 +40,61 @@ const supabase = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, 
   },
 }) || null;
 
+function showError(msg) {
+  if (errEl) errEl.textContent = msg || "";
+}
+
+function requireFields() {
+  const email = emailInput?.value.trim() || "";
+  const password = passwordInput?.value || "";
+  if (!email || !password) {
+    showError("Enter both email and password.");
+    return null;
+  }
+  return { email, password };
+}
+
+// Fail fast if network hangs
+function withTimeout(promise, ms) {
+  let timer;
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("Login timed out. Check your connection.")), ms);
+    }),
+  ]).finally(() => clearTimeout(timer));
+}
+
 loginForm?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  if (!supabase) {
-    if (errEl) errEl.textContent = "Unable to load the auth client. Check your connection and refresh.";
+  if (!supaClient) {
+    showError("Unable to load the auth client. Check your connection and refresh.");
     return;
   }
 
-  const email = emailInput?.value.trim() || "";
-  const password = passwordInput?.value || "";
-  if (errEl) errEl.textContent = "";
+  const creds = requireFields();
+  if (!creds) return;
+
+  const { email, password } = creds;
+  showError("");
   loginBtn?.setAttribute("disabled", "true");
 
   try {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await withTimeout(
+      supaClient.auth.signInWithPassword({ email, password }),
+      LOGIN_TIMEOUT_MS
+    );
     if (error) throw error;
 
     // Ensure session is written before navigating
-    await supabase.auth.getSession();
+    await supaClient.auth.getSession();
 
     // Success → redirect (relative path)
     window.location.href = "../search_page/search_bar.html";
   } catch (err) {
-    if (errEl) errEl.textContent = friendly(err);
+    console.error("Login error:", err);
+    showError(friendly(err));
   } finally {
     loginBtn?.removeAttribute("disabled");
   }
