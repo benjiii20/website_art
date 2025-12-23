@@ -1,45 +1,125 @@
-/* ====== Khaya NOIR Login ====== */
+/* ====== Khaya NOIR Login (NO CARD) ====== */
 :root{
---bg:#0a0a0a; /* page background */
---panel:#111214; /* card background */
---ink: #f2c34a;               /* primary text */
---muted: #c99b33;
---line:#242424; /* borders */
---accent:#ffffff; /* accent/white */
---radius:16px;
---shadow:0 14px 40px rgba(0,0,0,.55);
+  --bg:#0a0a0a;              /* page background */
+  --ink:#f2c34a;             /* primary text */
+  --muted:#c99b33;
+
+  --line:#242424;            /* INPUT border color (kept visible) */
+  --radius:16px;
 }
-*{box-sizing:border-box}
-html,body{height:100%}
-body{margin:0;background:radial-gradient(1200px 600px at 20% 10%, #121317 0%, #0a0a0a 48%, #050506 100%);color:var(--ink);font:400 16px/1.6 "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-img{max-width:100%;display:block}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+
+body{
+  margin:0;
+  background: var(--bg);     /* solid black */
+  color:var(--ink);
+  font:400 16px/1.6 "Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+img{ max-width:100%; display:block; }
 
 /* Centered page */
-.login-page{min-height:100dvh;display:grid;place-items:center;padding:2rem}
+.login-page{
+  min-height:100dvh;
+  display:grid;
+  place-items:center;
+  padding:2rem;
+}
 
-/* Card */
-.login-card{width:min(420px, 92vw);background:linear-gradient(180deg, rgba(255,255,255,.018), rgba(0,0,0,.02)), var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:2.2rem 2rem;display:grid;justify-items:center;gap:1rem}
-.login-logo{width:min(320px, 80%);height:auto;filter:contrast(1.05) brightness(.96)}
-.brand{margin:0;font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;letter-spacing:.08em;text-transform:capitalize;font-weight:700}
-.sub{margin:0 0 .5rem 0;color:var(--muted);font-size:.95rem;text-align:center}
+/* NO CARD: remove background/border/shadow/padding */
+.login-card{
+  width:min(420px, 92vw);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+  display:grid;
+  justify-items:center;
+  gap:1rem;
+}
+
+/* Logo (no “pop” filter) */
+.login-logo{
+  width:min(320px, 80%);
+  height:auto;
+  filter:none;
+  user-select:none;
+  -webkit-user-drag:none;
+  -webkit-touch-callout:none;
+}
 
 /* Form */
-#loginForm{width:100%;display:grid;gap:.9rem}
-#loginForm input{width:100%;padding:.85rem 1rem;background:#0b0c0e;border:1px solid var(--line);border-radius:12px;color:var(--ink);font-size:1rem;outline:none;transition:border-color .2s ease, box-shadow .2s ease}
-#loginForm input::placeholder{color:#8f8f8f}
-#loginForm input:focus{border-color:#3a3a3a;box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+#loginForm{
+  width:100%;
+  display:grid;
+  gap:.9rem;
+}
 
-/* Button */
-#loginBtn{padding:.9rem 1.1rem;border-radius:999px;border:1px solid var(--line);background:#0b0c0e;color:var(--ink);font-weight:600;font-size:1rem;cursor:pointer;transition:filter .15s ease, transform .02s ease}
-#loginBtn:hover{filter:brightness(1.08)}
-#loginBtn:active{transform:translateY(1px)}
-#loginBtn[disabled]{opacity:.6;cursor:wait}
+/* Inputs (KEEP borders visible) */
+#loginForm input{
+  width:100%;
+  padding:.85rem 1rem;
+  background:#0b0c0e;
+  border:1px solid var(--line);    /* visible */
+  border-radius:12px;
+  color:var(--ink);
+  font-size:1rem;
+  outline:none;
+  transition:border-color .2s ease, box-shadow .2s ease;
+}
+
+#loginForm input::placeholder{ color:#8f8f8f; }
+
+#loginForm input:focus{
+  border-color:var(--line);
+  box-shadow:0 0 0 3px rgba(255,255,255,.05);
+}
+
+/* Button (no visible border) */
+#loginBtn{
+  padding:.9rem 1.1rem;
+  border-radius:999px;
+  border:none;               /* blends */
+  background:#0b0c0e;
+  color:var(--ink);
+  font-weight:600;
+  font-size:1rem;
+  cursor:pointer;
+  transition:filter .15s ease, transform .02s ease;
+}
+
+#loginBtn:hover{ filter:brightness(1.08); }
+#loginBtn:active{ transform:translateY(1px); }
+#loginBtn[disabled]{ opacity:.6; cursor:wait; }
 
 /* Error */
-#login-error{min-height:1.2em;margin:.25rem 0 0 0;color:#ff6b6b;text-align:center;font-size:.9rem}
+#login-error{
+  min-height:1.2em;
+  margin:.25rem 0 0 0;
+  color:#ff6b6b;
+  text-align:center;
+  font-size:.9rem;
+}
 
 /* Screen-reader only label utility */
-.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.sr-only{
+  position:absolute;
+  width:1px;
+  height:1px;
+  padding:0;
+  margin:-1px;
+  overflow:hidden;
+  clip:rect(0,0,0,0);
+  white-space:nowrap;
+  border:0;
+}
 
 /* Small view adjustments */
-@media (max-width:420px){.brand{font-size:1.6rem}}
+@media (max-width:420px){
+  /* keep if you later add a brand heading */
+}
