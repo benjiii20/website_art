@@ -34,6 +34,7 @@
       -webkit-font-smoothing: antialiased;
       display: flex;
       flex-direction: column;
+      align-items: stretch;
     }
     body[data-theme="light"]{
       background:
@@ -43,10 +44,9 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px clamp(18px, 4vw, 32px);
-      max-width: 1200px;
+      padding: 20px calc(clamp(18px, 4vw, 32px) + 16px);
       width: 100%;
-      margin: 0 auto;
+      margin: 0;
     }
     .brand {
       font-weight: 700;
@@ -90,17 +90,20 @@
     main {
       flex: 1 1 auto;
       width: 100%;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: clamp(16px, 4vw, 32px);
+      margin: 0 0 48px 0;
+      padding: calc(clamp(16px, 4vw, 32px) + 16px);
       display: grid;
-      gap: 36px;
+      gap: 24px;
       grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      align-items: center;
+      align-items: start;
+      justify-items: start;
     }
     .hero {
       display: grid;
-      gap: 18px;
+      gap: 14px;
+      justify-items: start;
+      align-content: start;
+      width: min(1200px, 100%);
     }
     .eyebrow {
       display: inline-flex;
@@ -118,6 +121,7 @@
       font-size: clamp(2rem, 1.4rem + 2vw, 3.2rem);
       letter-spacing: 0.01em;
       color: var(--ink);
+      text-align: left;
     }
     p.lede {
       margin: 0;
@@ -130,6 +134,8 @@
       display: grid;
       gap: 16px;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      align-items: start;
+      width: min(1200px, 100%);
     }
     .card {
       border: 1px solid var(--line);
@@ -186,7 +192,7 @@
       </div>
     </section>
   </main>
-  <footer style="padding: 24px clamp(18px, 4vw, 32px); max-width: 1200px; margin: 0 auto; width: 100%; color: var(--muted); display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center;">
+  <footer style="padding: 24px clamp(18px, 4vw, 32px); margin: 0; width: 100%; color: var(--muted); display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center;">
     <span>© Khaya — a celebration of the arts.</span>
     <a href="./impressum.html" style="color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom:2px;">Impressum</a>
   </footer>
