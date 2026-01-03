@@ -21,6 +21,7 @@
 
   <!-- Our search logic -->
   <script defer src="search.js"></script>
+  <script defer src="../theme-toggle.js"></script>
 </head>
 <body>
   <div class="search-container">
@@ -46,12 +47,41 @@
           >
             ☰
           </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-theme-toggle
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >☀</button>
           <a
             class="icon-button"
             href="../favorites/favorites.html"
             aria-label="Go to favorites"
             title="Favorites"
           >★</a>
+          <div class="menu-wrapper">
+            <button
+              id="profileMenuBtn"
+              class="icon-button profile-btn"
+              type="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            aria-label="Profile menu"
+            title="Profile menu"
+            >
+              <svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2a5 5 0 0 1 5 5c0 2.76-2.24 5-5 5a5 5 0 0 1-5-5c0-2.76 2.24-5 5-5Zm0 12c4.418 0 8 2.239 8 5v2H4v-2c0-2.761 3.582-5 8-5Z"/>
+              </svg>
+            </button>
+            <div id="profileMenu" class="menu" role="menu">
+              <div class="menu-header">
+                <div class="menu-label">Profile</div>
+                <div id="menuUser" class="menu-user muted">Loading…</div>
+              </div>
+              <button id="logoutBtn" class="menu-action" type="button">Log out</button>
+            </div>
+          </div>
 
         </div>
       </div>

@@ -45,6 +45,9 @@ async function ensureSignedIn() {
       location.href = "../login_page/login.html";
       return false;
     }
+    const label = session.user.email || session.user.id;
+    const menuUser = document.getElementById("menuUser");
+    if (menuUser) menuUser.textContent = label;
     return true;
   } catch {
     location.href = "../login_page/login.html";
@@ -66,6 +69,9 @@ const regionSel   = document.getElementById("filterRegion");
 const countrySel  = document.getElementById("filterCountry");
 const genderSel   = document.getElementById("filterGender");
 const liveRegion  = document.getElementById("resultsStatus");
+const menuBtn = document.getElementById("profileMenuBtn");
+const menu = document.getElementById("profileMenu");
+const logoutBtn = document.getElementById("logoutBtn");
 
 // NEW FILTER DOM REFS
 const mediumSel   = document.getElementById("filterMedium");    // Medium / Art Form
@@ -77,6 +83,25 @@ const levelSel    = document.getElementById("filterLevel");     // Artist Level
 const formatSel   = document.getElementById("filterFormat");    // Format / Size
 const filtersPanel = document.getElementById("filtersPanel");
 const filtersToggle = document.getElementById("toggleFilters");
+
+// Profile menu handlers
+if (menuBtn && menu) {
+  menuBtn.addEventListener("click", () => {
+    const open = menu.classList.toggle("open");
+    menuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+  document.addEventListener("click", (e) => {
+    if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
+      menu.classList.remove("open");
+      menuBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
+
+logoutBtn?.addEventListener("click", async () => {
+  await supa.auth.signOut();
+  location.href = "../login_page/login.html";
+});
 
 let page = 1;
 let lastQuery = "";

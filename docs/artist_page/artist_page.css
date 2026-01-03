@@ -13,6 +13,11 @@
   --ink:   #f2c34a;           /* primary text (rich gold) */
   --muted: #c99b33;           /* secondary text (softer gold) */
 
+  --control-bg: rgba(10,10,10,.6);
+  --control-border: rgba(0,0,0,.4);
+  --shadow-outline: #070708;
+  --shadow-glow: rgba(158, 158, 158, 0.10);
+
   /* Frame controls */
   --stage-max: 960px;         /* cap the frame width (about 50% of desktop viewport) */
   --stage-ratio: 16/9;        /* frame aspect ratio */
@@ -56,6 +61,12 @@ body {
   justify-content: space-between;
   align-items: center;     /* ⭐ changed from flex-start to center */
   gap: 1rem;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .artist-header-main {
@@ -116,6 +127,22 @@ body {
   border-color: var(--ink);
   color: var(--ink);
 }
+
+.icon-btn.theme-toggle {
+  width: 2.4rem;
+  height: 2.4rem;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--bg);
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease, border-color .2s ease, transform .05s ease;
+}
+.icon-btn.theme-toggle:hover { background: rgba(242,195,74,0.12); }
+.icon-btn.theme-toggle:active { transform: translateY(1px); }
 
 /* ===== Framed gallery (NO EDGE — stage melts into page) ===== */
 .gallery {
@@ -184,8 +211,8 @@ body {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  border: 1px solid rgba(0,0,0,.4);      /* keep a subtle edge so buttons are visible */
-  background: rgba(10,10,10,.6);         /* subtle glassy button */
+  border: 1px solid var(--control-border);      /* keep a subtle edge so buttons are visible */
+  background: var(--control-bg);                /* subtle glassy button */
   color: var(--ink);
   width: calc(40px * var(--scale));
   height: calc(40px * var(--scale));
@@ -287,6 +314,19 @@ body {
   border: 1px solid var(--line);
   background: var(--bg);
   box-shadow:
-    0 0 0 1px #070708,
-    0 0 32px rgba(158, 158, 158, 0.10);
+    0 0 0 1px var(--shadow-outline),
+    0 0 32px var(--shadow-glow);
+}
+
+/* Light theme overrides */
+body[data-theme="light"] {
+  --bg: #f7f6f2;
+  --box-bg: #ffffff;
+  --line: #e2ded2;
+  --ink: #1c1d22;
+  --muted: #4f5058;
+  --control-bg: rgba(255,255,255,0.82);
+  --control-border: rgba(0,0,0,0.14);
+  --shadow-outline: #dcd7c8;
+  --shadow-glow: rgba(0,0,0,0.10);
 }

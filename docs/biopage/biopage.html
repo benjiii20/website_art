@@ -12,10 +12,18 @@
     window.SUPABASE_ANON_KEY =  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="../theme-toggle.js"></script>
 </head>
 <body>
   <div class="wrap">
     <header>
+      <button
+        class="theme-toggle-btn"
+        type="button"
+        data-theme-toggle
+        aria-label="Toggle theme"
+        title="Toggle theme"
+      >☀</button>
       <div class="avatar" aria-hidden="true"></div>
       <div>
         <h1 id="artistName" class="title">Loading artist…</h1>

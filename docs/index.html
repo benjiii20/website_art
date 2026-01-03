@@ -3,16 +3,193 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Khayaarts</title>
+  <title>Khaya — The home for African artists and galleries</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070708;
+      --panel: #0f1014;
+      --ink: #f2c34a;
+      --muted: #c99b33;
+      --line: #1b1c20;
+      --shadow: 0 14px 32px rgba(0,0,0,.35);
+    }
+    body[data-theme="light"] {
+      --bg: #f7f6f2;
+      --panel: #ffffff;
+      --ink: #1c1d22;
+      --muted: #4f5058;
+      --line: #d9d5c8;
+      --shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+      background:
+        radial-gradient(1400px 720px at 18% 12%, #171821 0%, #070708 48%, #040405 100%);
+      color: var(--ink);
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+    }
+    body[data-theme="light"]{
+      background:
+        radial-gradient(1400px 720px at 18% 12%, #ffffff 0%, #f4f1e8 45%, #ebe6d8 100%);
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px clamp(18px, 4vw, 32px);
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .brand {
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
+      text-decoration: none;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pill-link {
+      padding: 10px 16px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      text-decoration: none;
+      font-weight: 600;
+      transition: background .2s ease, transform .05s ease, border-color .2s ease;
+    }
+    .pill-link:hover { background: rgba(242,195,74,0.12); }
+    .pill-link:active { transform: translateY(1px); }
+    .theme-btn {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease, border-color .2s ease, transform .05s ease;
+    }
+    .theme-btn:hover { background: rgba(0,0,0,.05); }
+    .theme-btn:active { transform: translateY(1px); }
 
-  <!-- Redirect to login -->
-  <meta http-equiv="refresh" content="0; url=./login_page/login.html" />
+    main {
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: clamp(16px, 4vw, 32px);
+      display: grid;
+      gap: 36px;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      align-items: center;
+    }
+    .hero {
+      display: grid;
+      gap: 18px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(242,195,74,0.12);
+      color: var(--muted);
+      font-size: 0.9rem;
+      width: fit-content;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 1.4rem + 2vw, 3.2rem);
+      letter-spacing: 0.01em;
+      color: var(--ink);
+    }
+    p.lede {
+      margin: 0;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+    .muted { color: var(--muted); }
+    .feature-grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .card {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 16px 18px;
+      color: var(--ink);
+      box-shadow: var(--shadow);
+    }
+    .card h3 { margin: 0 0 6px; font-size: 1.05rem; letter-spacing: 0.02em; }
+    .card p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    @media (max-width: 720px) {
+      header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      nav { width: 100%; justify-content: flex-end; }
+    }
+  </style>
 </head>
 <body>
-  <p>Redirecting… <a href="./login_page/login.html">Continue</a></p>
+  <header>
+    <a class="brand" href="#">Khaya</a>
+    <nav>
+      <a class="pill-link" href="#about">Home</a>
+      <a class="pill-link" href="./login_page/login.html">For Galleries</a>
+      <a class="pill-link" href="./login_page/login.html">For Artists</a>
+      <button
+        class="theme-btn"
+        type="button"
+        data-theme-toggle
+        aria-label="Toggle theme"
+        title="Toggle theme"
+      >☀</button>
+    </nav>
+  </header>
 
-  <script>
-    window.location.replace("./login_page/login.html");
-  </script>
+  <main id="about">
+    <section class="hero">
+      <span class="eyebrow">Africa’s creative index</span>
+      <h1>Khaya connects underrepresented artists and the diaspora to galleries—across every region.</h1>
+      <p class="lede">
+        Born from a dream to learn the ways of the world through the purest form of truth and expression—Art—Khaya celebrates diverse cultures and bridges aspiring artists with the galleries that champion them.
+      </p>
+      <div class="feature-grid">
+        <div class="card">
+          <h3>For galleries</h3>
+          <p>Source artists, track favorites, and invite collaborators.</p>
+          <a class="pill-link" style="display:inline-flex;margin-top:8px;" href="./login_page/login.html">Sign in</a>
+        </div>
+        <div class="card">
+          <h3>For artists</h3>
+          <p>Publish your profile and showcase your works to partners worldwide.</p>
+          <a class="pill-link" style="display:inline-flex;margin-top:8px;" href="./login_page/login.html">Sign in</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer style="padding: 24px clamp(18px, 4vw, 32px); max-width: 1200px; margin: 0 auto; width: 100%; color: var(--muted); display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center;">
+    <span>© Khaya — a celebration of the arts.</span>
+    <a href="./impressum.html" style="color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom:2px;">Impressum</a>
+  </footer>
+  <script defer src="./theme-toggle.js"></script>
 </body>
 </html>

@@ -33,16 +33,26 @@
         <p id="artistMeta" class="artist-meta"></p>
       </div>
 
-      <!-- Favorites button in the header -->
-      <button
-        id="favoriteBtn"
-        class="artist-fav-btn"
-        type="button"
-        aria-pressed="false"
-        title="Add to favorites"
-      >
-        ☆
-      </button>
+      <div class="header-actions">
+        <button
+          id="themeToggle"
+          class="icon-btn theme-toggle"
+          type="button"
+          aria-pressed="false"
+          title="Toggle light or dark mode"
+        >☀</button>
+
+        <!-- Favorites button in the header -->
+        <button
+          id="favoriteBtn"
+          class="artist-fav-btn"
+          type="button"
+          aria-pressed="false"
+          title="Add to favorites"
+        >
+          ☆
+        </button>
+      </div>
     </header>
 
     <!-- bio removed -->
@@ -65,6 +75,7 @@
     (async function () {
       const root = document.getElementById('artistRoot');
       const showError = (msg) => { root.innerHTML = `<p class="error">${msg}</p>`; };
+      const bodyEl = document.body;
 
       // Local favorites cache key (for logged-out users)
       const FAVORITES_KEY = "favorite_artists";
@@ -83,6 +94,34 @@
 
       if (!window.supabase) return showError('Supabase JS not loaded.');
       const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+      // === theme toggle ===
+      const themeBtn = document.getElementById("themeToggle");
+      const THEME_KEY = "artist_theme";
+
+      function applyTheme(mode) {
+        const theme = mode === "light" ? "light" : "dark";
+        bodyEl.dataset.theme = theme;
+        if (themeBtn) {
+          themeBtn.textContent = theme === "light" ? "☾" : "☀";
+          themeBtn.setAttribute("aria-pressed", theme === "light" ? "true" : "false");
+          themeBtn.setAttribute("aria-label", theme === "light" ? "Switch to dark mode" : "Switch to light mode");
+          themeBtn.title = theme === "light" ? "Switch to dark mode" : "Switch to light mode";
+        }
+      }
+
+      function initTheme() {
+        const stored = localStorage.getItem(THEME_KEY);
+        const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+        const initial = stored || (prefersLight ? "light" : "dark");
+        applyTheme(initial);
+        themeBtn?.addEventListener("click", () => {
+          const next = bodyEl.dataset.theme === "light" ? "dark" : "light";
+          localStorage.setItem(THEME_KEY, next);
+          applyTheme(next);
+        });
+      }
+      initTheme();
 
       // 1) Fetch the published artist by slug
       const { data: artist, error: artistErr } = await supa

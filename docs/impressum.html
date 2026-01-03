@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Impressum — Khaya</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070708;
+      --panel: #0f1014;
+      --ink: #f2c34a;
+      --muted: #c99b33;
+      --line: #1b1c20;
+    }
+    body[data-theme="light"] {
+      --bg: #f7f6f2;
+      --panel: #ffffff;
+      --ink: #1c1d22;
+      --muted: #4f5058;
+      --line: #d9d5c8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px clamp(18px, 4vw, 32px) 48px;
+      width: 100%;
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(1.8rem, 1.4rem + 1vw, 2.4rem); }
+    p { margin: 0 0 10px; color: var(--muted); line-height: 1.7; }
+    .panel {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 16px;
+    }
+    a { color: var(--ink); }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .theme-btn {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      transition: background .2s ease, color .2s ease, border-color .2s ease, transform .05s ease;
+    }
+    .theme-btn:hover { background: rgba(0,0,0,.05); }
+    .theme-btn:active { transform: translateY(1px); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Impressum</h1>
+      <button
+        class="theme-btn"
+        type="button"
+        data-theme-toggle
+        aria-label="Toggle theme"
+        title="Toggle theme"
+      >☀</button>
+    </header>
+    <div class="panel">
+      <p><strong>Khaya</strong><br>
+      A platform connecting underrepresented artists and the diaspora to galleries across regions. Khaya is a celebration of cultures and a bridge for aspiring artists and galleries.</p>
+      <p>Contact: <a href="mailto:khayaartss@gmail.com">khayaartss@gmail.com</a></p>
+      <p>Website: <a href="https://www.khayarts.com">www.khayarts.com</a></p>
+      <p>Responsible for content: Khaya team.</p>
+      <p>If you have questions about the site, data, or legal notices, please reach out via email.</p>
+    </div>
+  </div>
+  <script defer src="./theme-toggle.js"></script>
+</body>
+</html>
