@@ -118,7 +118,7 @@
     }
     h1 {
       margin: 0;
-      font-size: clamp(2rem, 1.4rem + 2vw, 3.2rem);
+      font-size: clamp(1.12rem, 0.84rem + 1.12vw, 1.82rem);
       letter-spacing: 0.01em;
       color: var(--ink);
       text-align: left;
@@ -144,6 +144,10 @@
       padding: 16px 18px;
       color: var(--ink);
       box-shadow: var(--shadow);
+    }
+    .mission-card {
+      grid-column: 1 / -1;
+      max-width: none;
     }
     .card h3 { margin: 0 0 6px; font-size: 1.05rem; letter-spacing: 0.02em; }
     .card p { margin: 0; color: var(--muted); line-height: 1.6; }
@@ -176,8 +180,15 @@
       <span class="eyebrow">Africa’s creative index</span>
       <h1>Khaya connects underrepresented artists and the diaspora to galleries—across every region.</h1>
       <p class="lede">
-        Born from a dream to learn the ways of the world through the purest form of truth and expression—Art—Khaya celebrates diverse cultures and bridges aspiring artists with the galleries that champion them.
+        Khaya celebrates diverse cultures and bridges aspiring artists with the galleries that champion them.
       </p>
+      <div class="card mission-card">
+        <h3 style="margin:0 0 6px;">Our mission</h3>
+        <ul style="margin:0; padding-left: 18px; color: var(--muted); line-height:1.6;">
+          <li>Give artists everywhere the stage to be seen and appreciated by galleries worldwide.</li>
+          <li>Help galleries discover precurated, filtered artists who fit their exhibitions—across every region.</li>
+        </ul>
+      </div>
       <div class="feature-grid">
         <div class="card">
           <h3>For galleries</h3>
