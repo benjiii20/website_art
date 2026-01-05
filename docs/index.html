@@ -4,215 +4,471 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Khaya — The home for African artists and galleries</title>
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --bg: #070708;
       --panel: #0f1014;
-      --ink: #f2c34a;
-      --muted: #c99b33;
+      --text: #f4f4f6;
+      --muted: rgba(244,244,246,0.72);
       --line: #1b1c20;
+      --accent: #f2c34a;
+      --accent-weak: rgba(242,195,74,0.14);
       --shadow: 0 14px 32px rgba(0,0,0,.35);
+      --radius: 16px;
     }
+
     body[data-theme="light"] {
       --bg: #f7f6f2;
       --panel: #ffffff;
-      --ink: #1c1d22;
-      --muted: #4f5058;
+      --text: #1c1d22;
+      --muted: rgba(28,29,34,0.70);
       --line: #d9d5c8;
       --shadow: 0 12px 28px rgba(0,0,0,0.12);
+      --accent-weak: rgba(242,195,74,0.22);
     }
+
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
     body {
       margin: 0;
-      min-height: 100vh;
       font-family: "Inter", system-ui, -apple-system, Segoe UI, sans-serif;
-      background:
-        radial-gradient(1400px 720px at 18% 12%, #171821 0%, #070708 48%, #040405 100%);
-      color: var(--ink);
+      color: var(--text);
       -webkit-font-smoothing: antialiased;
+
+      background:
+        radial-gradient(1200px 680px at 18% 10%,
+          rgba(242,195,74,0.10) 0%,
+          rgba(23,24,33,1) 35%,
+          rgba(7,7,8,1) 70%,
+          rgba(4,4,5,1) 100%);
       display: flex;
       flex-direction: column;
       align-items: stretch;
     }
-    body[data-theme="light"]{
+
+    body[data-theme="light"] {
       background:
-        radial-gradient(1400px 720px at 18% 12%, #ffffff 0%, #f4f1e8 45%, #ebe6d8 100%);
+        radial-gradient(1200px 680px at 18% 10%,
+          rgba(242,195,74,0.10) 0%,
+          rgba(255,255,255,1) 35%,
+          rgba(244,241,232,1) 70%,
+          rgba(235,230,216,1) 100%);
     }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1100px, 100%);
+      margin: 0 auto;
+      padding: 0 clamp(18px, 4vw, 32px);
+    }
+
     header {
+      padding: 18px 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
+      background: linear-gradient(to bottom, rgba(7,7,8,0.75), rgba(7,7,8,0.30), rgba(7,7,8,0));
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+
+    body[data-theme="light"] header {
+      background: linear-gradient(to bottom, rgba(247,246,242,0.85), rgba(247,246,242,0.35), rgba(247,246,242,0));
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+
+    .header-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 20px calc(clamp(18px, 4vw, 32px) + 16px);
-      width: 100%;
-      margin: 0;
+      gap: 14px;
     }
+
     .brand {
-      font-weight: 700;
-      letter-spacing: 0.08em;
+      font-weight: 800;
+      letter-spacing: 0.10em;
       text-transform: uppercase;
-      color: var(--ink);
       text-decoration: none;
+      color: var(--accent);
     }
+
     nav {
       display: flex;
       align-items: center;
       gap: 10px;
+      justify-content: flex-end;
     }
+
     .pill-link {
-      padding: 10px 16px;
+      padding: 10px 14px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: var(--panel);
-      color: var(--ink);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
       text-decoration: none;
       font-weight: 600;
-      transition: background .2s ease, transform .05s ease, border-color .2s ease;
+      color: var(--text);
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
     }
-    .pill-link:hover { background: rgba(242,195,74,0.12); }
+
+    .pill-link:hover {
+      background: var(--accent-weak);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+    }
+
     .pill-link:active { transform: translateY(1px); }
+
+    .pill-primary {
+      color: #111;
+      background: var(--accent);
+      border-color: color-mix(in srgb, var(--accent) 70%, #000);
+    }
+
+    .pill-primary:hover { background: color-mix(in srgb, var(--accent) 88%, #fff); }
+
     .theme-btn {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       display: grid;
       place-items: center;
-      border-radius: 10px;
+      border-radius: 12px;
       border: 1px solid var(--line);
       background: var(--panel);
-      color: var(--ink);
+      color: var(--text);
       cursor: pointer;
-      transition: background .2s ease, color .2s ease, border-color .2s ease, transform .05s ease;
+      transition: transform .05s ease, background .2s ease, border-color .2s ease;
     }
-    .theme-btn:hover { background: rgba(0,0,0,.05); }
+
+    .theme-btn:hover {
+      background: var(--accent-weak);
+      border-color: color-mix(in srgb, var(--accent) 35%, var(--line));
+    }
+
     .theme-btn:active { transform: translateY(1px); }
+
+    .theme-btn:focus,
+    .pill-link:focus,
+    .mail-link:focus {
+      outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+      outline-offset: 2px;
+    }
 
     main {
       flex: 1 1 auto;
-      width: 100%;
-      margin: 0 0 48px 0;
-      padding: calc(clamp(16px, 4vw, 32px) + 16px);
-      display: grid;
-      gap: 24px;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      align-items: start;
-      justify-items: start;
+      padding: 40px 0 56px;
     }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: start;
+    }
+
+    @media (max-width: 880px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
     .hero {
       display: grid;
       gap: 14px;
-      justify-items: start;
       align-content: start;
-      width: min(1200px, 100%);
     }
+
     .eyebrow {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
+      gap: 10px;
+      padding: 7px 12px;
       border-radius: 999px;
-      background: rgba(242,195,74,0.12);
-      color: var(--muted);
-      font-size: 0.9rem;
       width: fit-content;
+      background: var(--accent-weak);
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      font-size: 0.92rem;
     }
+
     h1 {
       margin: 0;
-      font-size: clamp(1.12rem, 0.84rem + 1.12vw, 1.82rem);
+      font-size: clamp(1.35rem, 1.0rem + 1.4vw, 2.2rem);
+      line-height: 1.15;
       letter-spacing: 0.01em;
-      color: var(--ink);
-      text-align: left;
     }
-    p.lede {
+
+    .lede {
       margin: 0;
       color: var(--muted);
       font-size: 1.05rem;
-      line-height: 1.7;
+      line-height: 1.75;
+      max-width: 62ch;
     }
-    .muted { color: var(--muted); }
-    .feature-grid {
-      display: grid;
-      gap: 16px;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      align-items: start;
-      width: min(1200px, 100%);
-    }
+
     .card {
       border: 1px solid var(--line);
       background: var(--panel);
-      border-radius: 14px;
+      border-radius: var(--radius);
       padding: 16px 18px;
-      color: var(--ink);
       box-shadow: var(--shadow);
     }
-    .mission-card {
-      grid-column: 1 / -1;
-      max-width: none;
+
+    .card-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
     }
-    .card h3 { margin: 0 0 6px; font-size: 1.05rem; letter-spacing: 0.02em; }
-    .card p { margin: 0; color: var(--muted); line-height: 1.6; }
+
+    .card h2, .card h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      letter-spacing: 0.01em;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .card ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    /* RIGHT SIDE: two aligned cards like screenshot */
+    .side {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: 1fr 1fr;
+      align-items: stretch;
+    }
 
     @media (max-width: 720px) {
-      header { flex-direction: column; align-items: flex-start; gap: 10px; }
-      nav { width: 100%; justify-content: flex-end; }
+      .side { grid-template-columns: 1fr; }
     }
+
+    .side .card {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cta-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Stack buttons (like screenshot) */
+    .cta-row .pill-link {
+      flex: 1 1 100%;
+    }
+
+    /* Optional: inline buttons on wide screens */
+    @media (min-width: 980px) {
+      .cta-row .pill-link {
+        flex: 0 0 auto;
+      }
+    }
+
+    .divider {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid color-mix(in srgb, var(--line) 95%, transparent);
+    }
+
+    .mail-line {
+      color: var(--muted);
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+
+    .mail-link {
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      padding-bottom: 1px;
+    }
+
+    .mail-link:hover { border-bottom-color: var(--accent); }
+
+    /* Footer pinned to bottom for perfect alignment */
+    .card-footer {
+      margin-top: auto;
+    }
+
+    footer {
+      padding: 22px 0 28px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      color: var(--muted);
+    }
+
+    body[data-theme="light"] footer {
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .footer-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .impressum {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 2px;
+    }
+
+    .impressum:hover { border-bottom-color: var(--accent); }
   </style>
 </head>
+
 <body>
   <header>
-    <a class="brand" href="#">Khaya</a>
-    <nav>
-      <a class="pill-link" href="#about">Home</a>
-      <a class="pill-link" href="./login_page/login.html">For Galleries</a>
-      <a class="pill-link" href="./login_page/login.html">For Artists</a>
-      <button
-        class="theme-btn"
-        type="button"
-        data-theme-toggle
-        aria-label="Toggle theme"
-        title="Toggle theme"
-      >☀</button>
-    </nav>
+    <div class="shell">
+      <div class="header-row">
+        <a class="brand" href="#">Khaya</a>
+        <nav>
+          <button
+            class="theme-btn"
+            type="button"
+            data-theme-toggle
+            aria-label="Toggle theme"
+            title="Toggle theme"
+          >☀</button>
+        </nav>
+      </div>
+    </div>
   </header>
 
   <main id="about">
-    <section class="hero">
-      <span class="eyebrow">Africa’s creative index</span>
-      <h1>Khaya connects underrepresented artists and the diaspora to galleries—across every region.</h1>
-      <p class="lede">
-        Khaya celebrates diverse cultures and bridges aspiring artists with the galleries that champion them.
-      </p>
-      <div class="card mission-card">
-        <h3 style="margin:0 0 6px;">Our mission</h3>
-        <ul style="margin:0; padding-left: 18px; color: var(--muted); line-height:1.6;">
-          <li>Give artists everywhere the stage to be seen and appreciated by galleries worldwide.</li>
-          <li>Help galleries discover precurated, filtered artists who fit their exhibitions—across every region.</li>
-        </ul>
-      </div>
-      <div class="feature-grid">
-        <div class="card">
-          <h3>For galleries</h3>
-          <p>Source artists, track favorites, and invite collaborators.</p>
-          <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-            <a class="pill-link" style="display:inline-flex;" href="./login_page/login.html">Sign in</a>
-            <a class="pill-link" style="display:inline-flex;" href="mailto:khayaartss@gmail.com?subject=Sign%20up%20for%20Khaya%20%E2%80%94%20Galleries&body=Hi%20Khaya%20team%2C%0A%0AI'd%20like%20to%20sign%20up%20as%20a%20gallery.%20Please%20share%20next%20steps.%0A%0AThanks!">Sign up</a>
+    <div class="shell">
+      <div class="grid">
+        <!-- Left: Hero + Mission -->
+        <section class="hero" aria-label="Khaya introduction">
+          <span class="eyebrow">Khaya</span>
+
+          <h1>Khaya connects underrepresented artists with galleries around the world.</h1>
+
+          <p class="lede">
+            We celebrate diverse cultures and help artists present their work globally—while giving
+            galleries a thoughtful, curated way to discover new talent.
+          </p>
+
+          <div class="card">
+            <div class="card-title">
+              <h2>Our mission</h2>
+            </div>
+            <ul>
+              <li>Give artists a platform to be seen and championed by galleries worldwide.</li>
+              <li>Help galleries discover pre-curated talent that fits their exhibitions—across regions and styles.</li>
+            </ul>
           </div>
-        </div>
-        <div class="card">
-          <h3>For artists</h3>
-          <p>Publish your profile and showcase your works to partners worldwide.</p>
-          <div style="display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;">
-            <a class="pill-link" style="display:inline-flex;" href="./login_page/login.html">Sign in</a>
-            <a class="pill-link" style="display:inline-flex;" href="mailto:khayaartss@gmail.com?subject=Sign%20up%20for%20Khaya%20%E2%80%94%20Artists&body=Hi%20Khaya%20team%2C%0A%0AI'd%20like%20to%20sign%20up%20as%20an%20artist.%20Please%20share%20next%20steps.%0A%0AThanks!">Sign up</a>
+        </section>
+
+        <!-- Right: Two aligned cards -->
+        <aside class="side" aria-label="Galleries and artists actions">
+          <!-- Galleries -->
+          <div class="card">
+            <div class="card-title">
+              <h3>For galleries</h3>
+            </div>
+
+            <p>
+              Discover a pre-curated selection of artists matched to your programme, themes, and exhibitions.
+            </p>
+
+            <div class="cta-row">
+              <a class="pill-link pill-primary" href="./login_page/login.html">Sign in</a>
+              <a
+                class="pill-link"
+                href="mailto:khayaartss@gmail.com?subject=Request%20registration%20for%20Khaya%20%E2%80%94%20Galleries&body=Hi%20Khaya%20team%2C%0A%0AI%E2%80%99d%20like%20to%20request%20gallery%20registration.%20Please%20share%20the%20next%20steps.%0A%0AGallery%20name%3A%20%0ACity%20%2F%20Country%3A%20%0AWebsite%20(or%20Instagram)%3A%20%0A%0AThanks!"
+              >Request registration</a>
+            </div>
+
+            <!-- Pinned footer -->
+            <div class="card-footer">
+              <div class="divider">
+                <div class="mail-line">
+                  Email:
+                  <a class="mail-link" href="mailto:khayaartss@gmail.com">khayaartss@gmail.com</a>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+
+          <!-- Artists -->
+          <div class="card">
+            <div class="card-title">
+              <h3>For artists</h3>
+            </div>
+
+            <p>
+              Get your work in front of galleries worldwide and be considered for curated opportunities.
+            </p>
+
+            <div class="cta-row">
+              <a class="pill-link pill-primary" href="./login_page/login.html">Sign in</a>
+              <a
+                class="pill-link"
+                href="mailto:khayaartss@gmail.com?subject=Artist%20application%20for%20Khaya&body=Hi%20Khaya%20team%2C%0A%0AI%E2%80%99d%20like%20to%20apply%20to%20be%20on%20Khaya.%0A%0AName%3A%20%0ALocation%20(City%2C%20Country)%3A%20%0AInstagram%3A%20%0AWebsite%20(optional)%3A%20%0A%0APlease%20find%20my%205%E2%80%9310%20artwork%20images%20attached%20(or%20link%20below)%3A%0A%0A%5BPortfolio%20link%5D%0A%0AThanks!"
+              >Apply via email</a>
+            </div>
+
+            <div class="divider">
+              <p style="margin:0; color: var(--muted); line-height:1.65;">
+                <strong style="color: var(--text); font-weight: 700;">To apply to be on the platform, email:</strong>
+              </p>
+
+              <ul style="margin-top:8px;">
+                <li>Your full name</li>
+                <li>5–10 photos of your artwork (or a link to a folder/portfolio)</li>
+                <li>Your social media links (Instagram, website, etc.)</li>
+              </ul>
+            </div>
+
+            <!-- Pinned footer -->
+            <div class="card-footer">
+              <div class="divider">
+                <div class="mail-line">
+                  Email:
+                  <a class="mail-link" href="mailto:khayaartss@gmail.com">khayaartss@gmail.com</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
       </div>
-    </section>
+    </div>
   </main>
-  <footer style="padding: 24px clamp(18px, 4vw, 32px); margin: 0; width: 100%; color: var(--muted); display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:center;">
-    <span>© Khaya — a celebration of the arts.</span>
-    <a href="./impressum.html" style="color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom:2px;">Impressum</a>
+
+  <footer>
+    <div class="shell">
+      <div class="footer-row">
+        <span>© Khaya — a celebration of the arts.</span>
+        <a class="impressum" href="./impressum.html">Impressum</a>
+      </div>
+    </div>
   </footer>
+
   <script defer src="./theme-toggle.js"></script>
 </body>
 </html>
