@@ -69,13 +69,14 @@
     }
 
     header {
-      padding: 18px 0;
+      padding: 22px 0;
       position: sticky;
       top: 0;
       z-index: 10;
       backdrop-filter: blur(10px);
       background: linear-gradient(to bottom, rgba(7,7,8,0.75), rgba(7,7,8,0.30), rgba(7,7,8,0));
       border-bottom: 1px solid rgba(255,255,255,0.04);
+      overflow: visible;
     }
 
     body[data-theme="light"] header {
@@ -83,19 +84,32 @@
       border-bottom: 1px solid rgba(0,0,0,0.05);
     }
 
-    .header-row {
+    /* FULL-WIDTH HEADER CONTENT: logo left, theme button right */
+    .header-inner{
+      width: 100%;
+      padding: 0 clamp(18px, 4vw, 32px);
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 14px;
     }
 
-    .brand {
-      font-weight: 800;
-      letter-spacing: 0.10em;
-      text-transform: uppercase;
+    /* Move ONLY the logo slightly to the right */
+    .brand { 
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-decoration: none;
-      color: var(--accent);
+      margin-left: 24px; /* tweak this: 12px, 24px, 40px, etc. */
+    }
+
+    /* Bigger logo, show full logo */
+    .brand img {
+      height: 60px;
+      width: auto;
+      max-width: min(320px, 45vw);
+      object-fit: contain;
+      display: block;
     }
 
     nav {
@@ -343,21 +357,23 @@
 
 <body>
   <header>
-    <a class="brand" href="#">
-      <img src="./logos/KH gold.png" alt="Khaya" style="height:36px; width:auto; display:block;" />
-    </a>
-    <nav>
-      <a class="pill-link" href="#about">Home</a>
-      <a class="pill-link" href="./login_page/login.html">For Galleries</a>
-      <a class="pill-link" href="./login_page/login.html">For Artists</a>
-      <button
-        class="theme-btn"
-        type="button"
-        data-theme-toggle
-        aria-label="Toggle theme"
-        title="Toggle theme"
-      >☀</button>
-    </nav>
+    <div class="header-inner">
+      <!-- Logo moved to far left + nudged right a bit -->
+      <a class="brand" href="#">
+        <img src="./logos/KH gold.png" alt="Khaya" />
+      </a>
+
+      <!-- Theme toggle stays on far right -->
+      <nav>
+        <button
+          class="theme-btn"
+          type="button"
+          data-theme-toggle
+          aria-label="Toggle theme"
+          title="Toggle theme"
+        >☀</button>
+      </nav>
+    </div>
   </header>
 
   <main id="about">
@@ -379,7 +395,7 @@
               <h2>Our mission</h2>
             </div>
             <ul>
-              <li>Give artists a platform to be seen and championed by galleries worldwide.</li>
+              <li>Give artists a platform to be seen and discovered by galleries worldwide.</li>
               <li>Help galleries discover pre-curated talent that fits their exhibitions—across regions and styles.</li>
             </ul>
           </div>
