@@ -13,6 +13,7 @@ create extension if not exists "unaccent";
 -- =============
 create table if not exists public.artists (
   id              uuid primary key default gen_random_uuid(),
+  user_id         uuid unique references auth.users(id) on delete set null,
   name            text not null,
   slug            text not null unique,
   bio             text,
@@ -43,6 +44,7 @@ create index if not exists idx_artists_published on public.artists(is_published)
 create index if not exists idx_artists_slug on public.artists(slug);
 create index if not exists idx_artists_region on public.artists(region_sub);
 create index if not exists idx_artists_country on public.artists(country);
+create index if not exists idx_artists_user_id on public.artists(user_id);
 
 -- =============
 -- Artworks table
@@ -208,6 +210,9 @@ drop policy if exists "auth read published artists" on public.artists;
 drop policy if exists "auth read published artworks" on public.artworks;
 drop policy if exists "admins full access artists" on public.artists;
 drop policy if exists "admins full access artworks" on public.artworks;
+drop policy if exists "artist read own profile" on public.artists;
+drop policy if exists "artist manage own profile" on public.artists;
+drop policy if exists "artist manage own artworks" on public.artworks;
 
 -- Read: any SIGNED-IN user can read PUBLISHED rows
 create policy "auth read published artists"
@@ -215,6 +220,21 @@ on public.artists
 for select
 to authenticated
 using (is_published = true);
+
+-- Artists: read their own profile even if unpublished
+create policy "artist read own profile"
+on public.artists
+for select
+to authenticated
+using (user_id = auth.uid());
+
+-- Artists: manage only their own profile
+create policy "artist manage own profile"
+on public.artists
+for insert, update, delete
+to authenticated
+using (user_id = auth.uid())
+with check (user_id = auth.uid());
 
 create policy "auth read published artworks"
 on public.artworks
@@ -225,6 +245,26 @@ using (
   and exists (
     select 1 from public.artists a
     where a.id = artworks.artist_id and a.is_published = true
+  )
+);
+
+-- Artists: manage only their own artworks
+create policy "artist manage own artworks"
+on public.artworks
+for insert, update, delete
+to authenticated
+using (
+  exists (
+    select 1 from public.artists a
+    where a.id = artworks.artist_id
+      and a.user_id = auth.uid()
+  )
+)
+with check (
+  exists (
+    select 1 from public.artists a
+    where a.id = artworks.artist_id
+      and a.user_id = auth.uid()
   )
 );
 
