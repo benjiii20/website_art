@@ -1,4 +1,4 @@
-<!-- public/search_page/search_bar.html — Khaya NOIR ready -->
+<!-- public/search_page/search_bar.html — Khaya NOIR (Innovative / Atelier) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Artist Search</title>
 
-  <!-- Fonts for NOIR aesthetic -->
+  <!-- Fonts: Inter (UI) + Cormorant Garamond (artistic display) -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="search_styles.css" />
 
@@ -19,12 +19,32 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Our search logic -->
+  <!-- Your existing logic -->
   <script defer src="search.js"></script>
   <script defer src="../theme-toggle.js"></script>
 </head>
+
 <body>
   <div class="search-container">
+
+    <!-- Elegant header -->
+    <header class="page-head">
+      <div>
+        <!-- ✅ Logo placed exactly where “Khaya” title was -->
+        <h1 class="page-title">
+          <img
+            src="../logos/KH gold.png"
+            alt="Khaya"
+            class="brand-logo"
+            decoding="async"
+            loading="eager"
+          />
+        </h1>
+
+        <p class="page-subtitle muted">A curated atlas of contemporary artists.</p>
+      </div>
+    </header>
+
     <!-- Search bar + filters -->
     <div class="search-controls">
       <div class="search-top">
@@ -35,6 +55,7 @@
           class="search-input"
           aria-label="Search artists by name, region, or country"
         />
+
         <div class="icon-row">
           <button
             id="toggleFilters"
@@ -47,6 +68,7 @@
           >
             ☰
           </button>
+
           <button
             class="icon-button"
             type="button"
@@ -54,26 +76,29 @@
             aria-label="Toggle theme"
             title="Toggle theme"
           >☀</button>
+
           <a
             class="icon-button"
             href="../favorites/favorites.html"
             aria-label="Go to favorites"
             title="Favorites"
           >★</a>
+
           <div class="menu-wrapper">
             <button
               id="profileMenuBtn"
               class="icon-button profile-btn"
               type="button"
-            aria-haspopup="true"
-            aria-expanded="false"
-            aria-label="Profile menu"
-            title="Profile menu"
+              aria-haspopup="true"
+              aria-expanded="false"
+              aria-label="Profile menu"
+              title="Profile menu"
             >
               <svg aria-hidden="true" focusable="false" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2a5 5 0 0 1 5 5c0 2.76-2.24 5-5 5a5 5 0 0 1-5-5c0-2.76 2.24-5 5-5Zm0 12c4.418 0 8 2.239 8 5v2H4v-2c0-2.761 3.582-5 8-5Z"/>
               </svg>
             </button>
+
             <div id="profileMenu" class="menu" role="menu">
               <div class="menu-header">
                 <div class="menu-label">Profile</div>
@@ -82,21 +107,18 @@
               <button id="logoutBtn" class="menu-action" type="button">Log out</button>
             </div>
           </div>
-
         </div>
       </div>
 
+      <!-- Filters panel -->
       <div class="filters" id="filtersPanel">
-        <!-- Region / Country / Gender -->
         <select id="filterRegion" aria-label="Filter by region">
           <option value="">Region</option>
-          <!-- Africa -->
           <option>North Africa</option>
           <option>West Africa</option>
           <option>East Africa</option>
           <option>Central Africa</option>
           <option>Southern Africa</option>
-          <!-- Americas -->
           <option>North America</option>
           <option>Central America</option>
           <option>Caribbean</option>
@@ -111,12 +133,8 @@
           <option value="">Gender</option>
           <option value="male">Male</option>
           <option value="female">Female</option>
-          <option value="nonbinary">Non-binary</option>
-          <option value="other">Other</option>
-          <option value="prefer_not_to_say">Prefer not to say</option>
         </select>
 
-        <!-- 1️⃣ Medium / Art Form -->
         <select id="filterMedium" aria-label="Filter by medium or art form">
           <option value="">Medium / Art Form</option>
           <option value="Painting">Painting</option>
@@ -125,7 +143,6 @@
           <option value="Textile Art">Textile Art</option>
         </select>
 
-        <!-- 2️⃣ Style / Aesthetic -->
         <select id="filterStyle" aria-label="Filter by style or aesthetic">
           <option value="">Style / Aesthetic</option>
           <option value="Abstract">Abstract</option>
@@ -145,7 +162,6 @@
           <option value="Landscape">Landscape</option>
         </select>
 
-        <!-- 3️⃣ Themes / Content -->
         <select id="filterTheme" aria-label="Filter by theme or content">
           <option value="">Themes / Content</option>
           <option value="Identity">Identity</option>
@@ -161,7 +177,6 @@
           <option value="Migration & Memory">Migration &amp; Memory</option>
         </select>
 
-        <!-- 4️⃣ Mood -->
         <select id="filterMood" aria-label="Filter by mood">
           <option value="">Mood</option>
           <option value="Calm">Calm</option>
@@ -174,7 +189,6 @@
           <option value="Bold">Bold</option>
         </select>
 
-        <!-- 5️⃣ Color Palette -->
         <select id="filterPalette" aria-label="Filter by color palette">
           <option value="">Color Palette</option>
           <option value="Monochrome">Monochrome</option>
@@ -186,7 +200,6 @@
           <option value="Bright / Multicolor">Bright / Multicolor</option>
         </select>
 
-        <!-- 6️⃣ Artist Level -->
         <select id="filterLevel" aria-label="Filter by artist level">
           <option value="">Artist Level</option>
           <option value="Emerging Artist">Emerging Artist</option>
@@ -195,7 +208,6 @@
           <option value="Student / Academy Artist">Student / Academy Artist</option>
         </select>
 
-        <!-- 7️⃣ Format / Size -->
         <select id="filterFormat" aria-label="Filter by format or size">
           <option value="">Format / Size</option>
           <option value="Small">Small</option>
@@ -209,7 +221,7 @@
     <!-- Screen-reader live status -->
     <div id="resultsStatus" aria-live="polite" style="position:absolute;left:-9999px;"></div>
 
-    <!-- Results grid (matches CSS) -->
+    <!-- Results grid -->
     <div class="results-grid"></div>
 
     <!-- Pagination -->
@@ -221,3 +233,4 @@
   </div>
 </body>
 </html>
+

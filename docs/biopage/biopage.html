@@ -1,33 +1,76 @@
+<!-- artist_bio.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Artist Bio</title>
+
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Shared Khaya NOIR theme (same as search/favorites) -->
+  <link rel="stylesheet" href="../search_page/search_styles.css">
+
+  <!-- Page CSS -->
   <link rel="stylesheet" href="biopage.css">
+
   <script>
     window.SUPABASE_URL = 'https://jhzlxmomyypgtkuwdvzn.supabase.co';
-    window.SUPABASE_ANON_KEY =  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impoemx4bW9teXlwZ3RrdXdkdnpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzOTgzMzEsImV4cCI6MjA3Mzk3NDMzMX0.IZw6mlxn7Hbue5UlrckhPJeCDNplj-zM1zoiddQGnj0';
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script defer src="../theme-toggle.js"></script>
 </head>
+
 <body>
   <div class="wrap">
-    <header>
-      <button
-        class="theme-toggle-btn"
-        type="button"
-        data-theme-toggle
-        aria-label="Toggle theme"
-        title="Toggle theme"
-      >☀</button>
-      <div class="avatar" aria-hidden="true"></div>
-      <div>
-        <h1 id="artistName" class="title">Loading artist…</h1>
+
+    <header class="bio-head">
+      <div class="bio-titleblock">
+        <h1 class="page-title">
+          <img src="../logos/KH gold.png" alt="Khaya" class="brand-logo">
+        </h1>
+
+        <h2 id="artistName" class="title">Loading artist…</h2>
         <p id="artistMeta" class="meta"></p>
+      </div>
+
+      <div class="bio-actions">
+        <!-- Social icons (icons only) -->
+        <nav class="social" id="socialNav" aria-label="Artist social links">
+          <a class="social-link" id="tiktokLink" href="#" target="_blank" rel="noopener" aria-label="TikTok" title="TikTok">
+            <!-- TikTok -->
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M16.7 5.2c.7.9 1.8 1.6 3.1 1.7v3.1c-1.4 0-2.7-.4-3.8-1.2v6.4c0 3-2.4 5.4-5.4 5.4S5.2 18.2 5.2 15.2s2.4-5.4 5.4-5.4c.4 0 .8 0 1.2.1v3.2c-.4-.2-.8-.3-1.2-.3-1.2 0-2.2 1-2.2 2.2s1 2.2 2.2 2.2 2.2-1 2.2-2.2V3.8h3.1c0 .5.2 1 .5 1.4Z"/>
+            </svg>
+          </a>
+
+          <a class="social-link" id="instagramLink" href="#" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
+            <!-- Instagram -->
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7.2 2.8h9.6A4.4 4.4 0 0 1 21.2 7.2v9.6a4.4 4.4 0 0 1-4.4 4.4H7.2a4.4 4.4 0 0 1-4.4-4.4V7.2a4.4 4.4 0 0 1 4.4-4.4Zm0 2.2A2.2 2.2 0 0 0 5 7.2v9.6A2.2 2.2 0 0 0 7.2 19h9.6a2.2 2.2 0 0 0 2.2-2.2V7.2A2.2 2.2 0 0 0 16.8 5H7.2Z"/>
+              <path d="M12 7.8A4.2 4.2 0 1 1 7.8 12 4.2 4.2 0 0 1 12 7.8Zm0 2.2A2 2 0 1 0 14 12a2 2 0 0 0-2-2Z"/>
+              <path d="M17.3 6.6a.9.9 0 1 1-.9.9.9.9 0 0 1 .9-.9Z"/>
+            </svg>
+          </a>
+
+          <a class="social-link" id="websiteLink" href="#" target="_blank" rel="noopener" aria-label="Website" title="Website">
+            <!-- Website / Link -->
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M10.6 13.4a1 1 0 0 1 0-1.4l3.4-3.4a3 3 0 1 1 4.2 4.2l-2.2 2.2a3 3 0 0 1-4.2 0 1 1 0 1 1 1.4-1.4 1 1 0 0 0 1.4 0l2.2-2.2a1 1 0 0 0-1.4-1.4l-3.4 3.4a1 1 0 0 1-1.4 0Z"/>
+              <path d="M13.4 10.6a1 1 0 0 1 0 1.4l-3.4 3.4a3 3 0 1 1-4.2-4.2l2.2-2.2a3 3 0 0 1 4.2 0 1 1 0 0 1-1.4 1.4 1 1 0 0 0-1.4 0l-2.2 2.2a1 1 0 0 0 1.4 1.4l3.4-3.4a1 1 0 0 1 1.4 0Z"/>
+            </svg>
+          </a>
+        </nav>
+
+        <button
+          class="theme-toggle-btn"
+          type="button"
+          data-theme-toggle
+          aria-label="Toggle theme"
+          title="Toggle theme"
+        >☀</button>
       </div>
     </header>
 
@@ -35,9 +78,9 @@
       <section class="panel">
         <h2>Highlights</h2>
         <ul>
-          <li class="stat"><span>Exhibitions</span><span>12 solo / 8 group</span></li>
-          <li class="stat"><span>Residencies</span><span>3</span></li>
-          <li class="stat"><span>Press</span><span>ArtForum, Juxtapoz, Guardian</span></li>
+          <li class="stat"><span>Exhibitions</span><span id="exhibitionsVal">—</span></li>
+          <li class="stat"><span>Residencies</span><span id="residenciesVal">—</span></li>
+          <li class="stat"><span>Press</span><span id="pressVal">—</span></li>
         </ul>
       </section>
 
@@ -52,7 +95,9 @@
       <div id="works" class="works"></div>
       <a id="artistGalleryLink" class="cta" href="../artist_page/artist_page.html">View full gallery</a>
     </section>
+
   </div>
+
   <script>
     (async function () {
       const nameEl = document.getElementById('artistName');
@@ -61,24 +106,72 @@
       const galleryLink = document.getElementById('artistGalleryLink');
       const worksEl = document.getElementById('works');
 
+      // Highlights values
+      const exhibitionsVal = document.getElementById('exhibitionsVal');
+      const residenciesVal = document.getElementById('residenciesVal');
+      const pressVal = document.getElementById('pressVal');
+
+      // Social anchors
+      const socialNav = document.getElementById('socialNav');
+      const tiktokLink = document.getElementById('tiktokLink');
+      const instagramLink = document.getElementById('instagramLink');
+      const websiteLink = document.getElementById('websiteLink');
+
       const params = new URLSearchParams(location.search);
       const slug = params.get('slug');
 
       const showError = (msg) => {
         nameEl.textContent = 'Artist unavailable';
         metaEl.textContent = '';
-        taglineEl.textContent = msg;
         statementEl.textContent = msg;
         worksEl.innerHTML = `<p class="muted">${msg}</p>`;
+      };
+
+      const hideLink = (el) => {
+        el.style.display = 'none';
+        el.removeAttribute('href');
+      };
+
+      const normalizeUrl = (value, kind) => {
+        if (!value) return '';
+        let v = String(value).trim();
+        if (!v) return '';
+
+        // If already a full URL, keep it
+        if (/^https?:\/\//i.test(v)) return v;
+
+        // If user saved a handle, build the URL
+        const handle = v.replace(/^@/, '');
+
+        if (kind === 'instagram') return `https://instagram.com/${handle}`;
+        if (kind === 'tiktok') return `https://www.tiktok.com/@${handle}`;
+
+        // website: if no protocol, assume https
+        if (kind === 'website') return `https://${v}`;
+
+        return v;
+      };
+
+      const setSocialLink = (el, rawValue, kind) => {
+        const url = normalizeUrl(rawValue, kind);
+        if (!url) {
+          hideLink(el);
+          return false;
+        }
+        el.href = url;
+        el.style.display = '';
+        return true;
       };
 
       if (!slug) return showError('Missing artist slug in the URL.');
       if (!window.supabase) return showError('Supabase not available.');
 
       const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+      // ✅ Pull highlights + socials from DB
       const { data: artist, error } = await supa
         .from('artists')
-        .select('id,name,slug,bio,country,region_sub,gender,is_published')
+        .select('id,name,slug,bio,country,region_sub,gender,is_published,exhibitions,residencies,press,instagram,tiktok,website')
         .eq('slug', slug)
         .eq('is_published', true)
         .maybeSingle();
@@ -89,11 +182,25 @@
       nameEl.textContent = artist.name || 'Untitled artist';
       metaEl.textContent = [artist.country, artist.region_sub, artist.gender].filter(Boolean).join(' • ');
       statementEl.textContent = artist.bio || 'No statement provided yet.';
-      galleryLink.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
-      galleryLink.setAttribute('aria-label', `View gallery for ${artist.name}`);
       document.title = `${artist.name} — Bio`;
 
-      // Fetch a few published artworks to preview (same data entered via admin)
+      // ✅ Highlights from DB (fallback to dash)
+      exhibitionsVal.textContent = (artist.exhibitions && String(artist.exhibitions).trim()) || '—';
+      residenciesVal.textContent = (artist.residencies && String(artist.residencies).trim()) || '—';
+      pressVal.textContent = (artist.press && String(artist.press).trim()) || '—';
+
+      // ✅ Social links from DB (hide icon if missing)
+      const anySocial =
+        setSocialLink(tiktokLink, artist.tiktok, 'tiktok') |
+        setSocialLink(instagramLink, artist.instagram, 'instagram') |
+        setSocialLink(websiteLink, artist.website, 'website');
+
+      // If none exist, hide the whole social row
+      if (!anySocial) socialNav.style.display = 'none';
+
+      galleryLink.href = `../artist_page/artist_page.html?slug=${encodeURIComponent(artist.slug)}`;
+      galleryLink.setAttribute('aria-label', `View gallery for ${artist.name}`);
+
       const { data: works, error: worksErr } = await supa
         .from('artworks')
         .select('id,title,description,year,image_url,is_published,created_at')
@@ -127,6 +234,7 @@
         const title = document.createElement('h3');
         const yearText = a.year ? ` (${a.year})` : '';
         title.textContent = `${a.title || 'Untitled'}${yearText}`;
+
         const desc = document.createElement('p');
         desc.textContent = a.description || 'No description.';
 

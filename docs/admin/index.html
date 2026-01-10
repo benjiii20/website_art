@@ -128,12 +128,15 @@
     <h2>Create / Update Artist</h2>
     <span id="artistMode" class="pill">Mode: Create</span>
   </div>
+
   <form id="artistForm">
     <input type="hidden" id="artistId" />
+
     <div class="row">
       <input id="artistName" placeholder="Name" required />
       <input id="artistSlug" placeholder="Slug (optional; auto from name)" />
     </div>
+
     <textarea id="artistBio" rows="4" placeholder="Bio"></textarea>
 
     <div class="row3">
@@ -159,7 +162,6 @@
 
     <!-- NEW: Medium / Style / Theme -->
     <div class="row3">
-      <!-- Medium / Art Form -->
       <select id="artistMedium">
         <option value="">Medium / Art Form</option>
         <option value="Painting">Painting</option>
@@ -168,7 +170,6 @@
         <option value="Textile Art">Textile Art</option>
       </select>
 
-      <!-- Style / Aesthetic -->
       <select id="artistStyle">
         <option value="">Style / Aesthetic</option>
         <option value="Abstract">Abstract</option>
@@ -188,7 +189,6 @@
         <option value="Landscape">Landscape</option>
       </select>
 
-      <!-- Themes / Content -->
       <select id="artistTheme">
         <option value="">Themes / Content</option>
         <option value="Identity">Identity</option>
@@ -207,7 +207,6 @@
 
     <!-- NEW: Mood / Palette / Level / Format -->
     <div class="row3">
-      <!-- Mood -->
       <select id="artistMood">
         <option value="">Mood</option>
         <option value="Calm">Calm</option>
@@ -220,7 +219,6 @@
         <option value="Bold">Bold</option>
       </select>
 
-      <!-- Color Palette -->
       <select id="artistPalette">
         <option value="">Color Palette</option>
         <option value="Monochrome">Monochrome</option>
@@ -232,7 +230,6 @@
         <option value="Bright / Multicolor">Bright / Multicolor</option>
       </select>
 
-      <!-- Artist Level / Format share last slot (stack) -->
       <div class="stack" style="gap:8px; flex-wrap:nowrap;">
         <select id="artistLevel" style="flex:1;">
           <option value="">Artist Level</option>
@@ -250,6 +247,20 @@
           <option value="Extra Large">Extra Large</option>
         </select>
       </div>
+    </div>
+
+    <!-- ✅ NEW: Highlights -->
+    <div class="row3">
+      <input id="artistExhibitions" placeholder="Exhibitions (e.g. 12 solo / 8 group)" />
+      <input id="artistResidencies" placeholder="Residencies (e.g. 3)" />
+      <input id="artistPress" placeholder="Press (e.g. ArtForum, Juxtapoz, Guardian)" />
+    </div>
+
+    <!-- ✅ NEW: Social links -->
+    <div class="row3">
+      <input id="artistInstagram" placeholder="Instagram (URL or @handle)" />
+      <input id="artistTiktok" placeholder="TikTok (URL or @handle)" />
+      <input id="artistWebsite" placeholder="Website (domain or URL)" />
     </div>
 
     <div class="stack">
@@ -326,7 +337,7 @@
 </section>
 
 <script>
-  // ---------- Setup ----------  
+  // ---------- Setup ----------
   function pickAuthStorage() {
     try {
       const k = "sb-check";
@@ -441,7 +452,7 @@
   const artistSaveBtn = document.getElementById('artistSaveBtn');
   const artistsTableBody = document.querySelector('#artistsTable tbody');
 
-  // NEW: extended artist metadata
+  // extended artist metadata
   const artistMediumEl  = document.getElementById('artistMedium');
   const artistStyleEl   = document.getElementById('artistStyle');
   const artistThemeEl   = document.getElementById('artistTheme');
@@ -449,6 +460,14 @@
   const artistPaletteEl = document.getElementById('artistPalette');
   const artistLevelEl   = document.getElementById('artistLevel');
   const artistFormatEl  = document.getElementById('artistFormat');
+
+  // ✅ NEW: highlights + socials
+  const artistExhibitionsEl = document.getElementById('artistExhibitions');
+  const artistResidenciesEl = document.getElementById('artistResidencies');
+  const artistPressEl       = document.getElementById('artistPress');
+  const artistInstagramEl   = document.getElementById('artistInstagram');
+  const artistTiktokEl      = document.getElementById('artistTiktok');
+  const artistWebsiteEl     = document.getElementById('artistWebsite');
 
   const artistSearch = document.getElementById('artistSearch');
   const prevArtists = document.getElementById('prevArtists');
@@ -470,6 +489,7 @@
     artistForm.reset();
     resetCountrySelect(countryEl);
   }
+
   function setArtistModeEdit(row){
     artistIdEl.value = row.id;
     nameEl.value = row.name || '';
@@ -480,7 +500,7 @@
     populateCountries(regionEl.value, countryEl);
     countryEl.value = row.country || '';
 
-    // NEW: fill extended metadata
+    // extended metadata
     artistMediumEl.value  = row.medium || '';
     artistStyleEl.value   = row.style || '';
     artistThemeEl.value   = row.theme || '';
@@ -489,11 +509,20 @@
     artistLevelEl.value   = row.artist_level || '';
     artistFormatEl.value  = row.format_size || '';
 
+    // ✅ NEW: highlights + socials
+    artistExhibitionsEl.value = row.exhibitions || '';
+    artistResidenciesEl.value = row.residencies || '';
+    artistPressEl.value       = row.press || '';
+    artistInstagramEl.value   = row.instagram || '';
+    artistTiktokEl.value      = row.tiktok || '';
+    artistWebsiteEl.value     = row.website || '';
+
     artistMode.textContent = 'Mode: Edit';
     artistSaveBtn.textContent = 'Update artist';
     artistCancelBtn.style.display = 'inline-block';
     setStatus(artistOut, `Editing artist id ${row.id}`, 'muted');
   }
+
   artistCancelBtn.onclick = () => setArtistModeCreate();
 
   artistForm.addEventListener('submit', async (e) => {
@@ -516,14 +545,22 @@
         country: countryEl.value || null,
         is_published: true,
 
-        // NEW: extended metadata
+        // extended metadata
         medium:        artistMediumEl.value  || null,
         style:         artistStyleEl.value   || null,
         theme:         artistThemeEl.value   || null,
         mood:          artistMoodEl.value    || null,
         color_palette: artistPaletteEl.value || null,
         artist_level:  artistLevelEl.value   || null,
-        format_size:   artistFormatEl.value  || null
+        format_size:   artistFormatEl.value  || null,
+
+        // ✅ NEW: highlights + socials
+        exhibitions: (artistExhibitionsEl.value || '').trim() || null,
+        residencies: (artistResidenciesEl.value || '').trim() || null,
+        press:       (artistPressEl.value || '').trim() || null,
+        instagram:   (artistInstagramEl.value || '').trim() || null,
+        tiktok:      (artistTiktokEl.value || '').trim() || null,
+        website:     (artistWebsiteEl.value || '').trim() || null
       };
 
       if(artistIdEl.value){
@@ -567,10 +604,12 @@
   async function loadArtistsList(page = 1){
     const from = (page - 1) * artistPageSize;
     const to   = from + artistPageSize;
+
     let q = supa.from('artists')
       .select(
         'id,name,slug,region_sub,country,bio,gender,' +
-        'medium,style,theme,mood,color_palette,artist_level,format_size',
+        'medium,style,theme,mood,color_palette,artist_level,format_size,' +
+        'exhibitions,residencies,press,instagram,tiktok,website',
         { count: 'exact' }
       )
       .eq('is_published', true);
@@ -609,6 +648,7 @@
     prevArtists.disabled = artistPage === 1;
     nextArtists.disabled = !artistHasMore;
   }
+
   prevArtists.onclick = () => { if (artistPage > 1) loadArtistsList(artistPage - 1); };
   nextArtists.onclick = () => { if (artistHasMore) loadArtistsList(artistPage + 1); };
   artistSearch.addEventListener('input', () => loadArtistsList(1));
@@ -833,14 +873,12 @@
     try {
       await requireAuth();
 
-      // Clear current profile for this artist
       await supa
         .from('artworks')
         .update({ is_profile: false })
         .eq('artist_id', artRow.artist_id)
         .throwOnError();
 
-      // Set this one as profile
       await supa
         .from('artworks')
         .update({ is_profile: true })

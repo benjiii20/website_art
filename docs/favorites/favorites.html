@@ -5,75 +5,87 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Favorite Artists</title>
 
+  <!-- Fonts: match Search page (Inter + Cormorant Garamond) -->
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <!-- CSS lives in ../search_page/ -->
+  <!-- Shared theme + palette -->
   <link rel="stylesheet" href="../search_page/search_styles.css" />
 
   <style>
-    /* Make this page background follow the theme */
-    body{
-      background:var(--bg);
-    }
+    /* ✅ IMPORTANT: do NOT override body background here
+       (search_styles.css already sets the noir/beige gradients) */
 
-    /* Page header */
-    .favorites-page-header{
+    /* Header layout (reuse search styling, add actions on the right) */
+    .favorites-head{
       display:flex;
+      align-items:flex-end;
       justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      margin-bottom:16px;
+      gap:16px;
+      margin-bottom: 18px;
     }
     .favorites-actions{
       display:flex;
-      gap:8px;
+      gap:10px;
       align-items:center;
     }
 
-    /* Clear button */
+    /* Clear button — matches palette */
     .fav-clear{
-      padding:8px 14px;
+      padding:10px 14px;
       border-radius:999px;
       border:1px solid var(--line);
       background:var(--chip);
-      color:var(--muted);
-      font-size:.9rem;
+      color: var(--muted);
+      font-size:.92rem;
       cursor:pointer;
-      transition:filter .15s ease, transform .02s ease;
+      box-shadow: var(--shadow-soft);
+      transition: filter .15s ease, transform .02s ease, border-color .18s ease;
     }
-    .fav-clear:hover{filter:brightness(1.06);}
-    .fav-clear:active{transform:translateY(1px);}
-    .fav-clear:disabled{opacity:.5;cursor:default;}
+    .fav-clear:hover{ filter:brightness(1.06); border-color: var(--gold-line); }
+    .fav-clear:active{ transform:translateY(1px); }
+    .fav-clear:disabled{ opacity:.5; cursor:default; }
 
-    /* Slightly tighter cards on favorites page */
-    .favorites-compact{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));}
-    .favorites-compact .artist-card{max-width:260px;margin:0 auto;}
-    .favorites-compact .artist-info h3{font-size:1rem;}
+    /* Compact grid on favorites page */
+    .favorites-compact{ grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); }
+    .favorites-compact .artist-card{ max-width:260px; margin:0 auto; }
+    .favorites-compact .artist-info h3{ font-size:1rem; }
 
-    /* Favorite remove button on each card */
+    /* ✅ Remove button BACK on artwork (top-right) and GOLD */
     .fav-btn{
       position:absolute;
       top:10px;
       right:10px;
-      border:1px solid var(--line);
-      background:rgba(0,0,0,.35);
-      color:var(--accent);
-      border-radius:999px;
       width:32px;
       height:32px;
       display:grid;
       place-items:center;
+
+      border-radius:999px;
+      border: 1px solid var(--gold-line);
+      background: rgba(0,0,0,.28);
+      color: var(--gold);          /* ✅ gold */
       cursor:pointer;
-      font-size:1.1rem;
-      backdrop-filter:blur(2px);
-      transition:background .15s ease, transform .1s ease, border-color .15s ease;
+      font-size:1.15rem;
+      line-height:1;
+      backdrop-filter: blur(2px);
+      box-shadow: 0 12px 26px rgba(0,0,0,.35);
+
+      transition: filter .15s ease, transform .1s ease, border-color .15s ease;
+      z-index: 5; /* ensure above image */
     }
-    .fav-btn:hover{background:rgba(255,255,255,.08);}
-    .fav-btn[data-active="true"]{
-      background:rgba(0,0,0,.35);
-      border-color:var(--ink);
-      color:var(--ink);
+    .fav-btn:hover{
+      filter: brightness(1.06);
+      border-color: rgba(242,195,74,.35);
+    }
+    .fav-btn:active{ transform: translateY(1px); }
+
+    /* light mode: still gold, softer overlay */
+    body[data-theme="light"] .fav-btn{
+      background: rgba(255,255,255,.55);
+      color: var(--gold);
+      border-color: var(--gold-line);
+      box-shadow: 0 12px 22px rgba(20,21,26,.10);
     }
   </style>
 
@@ -83,12 +95,25 @@
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
+
 <body>
   <div class="search-container">
-    <header class="favorites-page-header">
+
+    <!-- Header matches Search page + logo in the same spot -->
+    <header class="favorites-head">
       <div>
-        <h1 style="margin:0;color:var(--ink);font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-weight:700;">Favorite Artists</h1>
+        <h1 class="page-title">
+          <img
+            src="../logos/KH gold.png"
+            alt="Khaya"
+            class="brand-logo"
+            decoding="async"
+            loading="eager"
+          />
+        </h1>
+        <p class="page-subtitle muted">Your saved artists.</p>
       </div>
+
       <div class="favorites-actions">
         <button
           class="icon-button"
@@ -97,9 +122,10 @@
           aria-label="Toggle theme"
           title="Toggle theme"
         >☀</button>
-        <!-- back home -->
-        <a class="icon-button" href="../search_page/search_bar.html" aria-label="Back to search">⌂</a>
-        <button id="favClear" class="fav-clear">Clear all</button>
+
+        <a class="icon-button" href="../search_page/search_bar.html" aria-label="Back to search" title="Back to search">⌂</a>
+
+        <button id="favClear" class="fav-clear" type="button">Clear all</button>
       </div>
     </header>
 
@@ -138,7 +164,6 @@
       }
 
       async function loadFavorites() {
-        // Supabase account mode
         if (mode === "account" && userId) {
           const { data, error } = await supa
             .from("favorites")
@@ -159,7 +184,6 @@
             artist_id: row.artist_id
           }));
 
-          // Fetch profile images
           const ids = list.map(l => l.artist_id).filter(Boolean);
           const profileMap = {};
           if (ids.length) {
@@ -179,12 +203,10 @@
           return list.map(item => ({ ...item, image_url: profileMap[item.artist_id] }));
         }
 
-        // Local-only mode: favorites stored in localStorage as { id }
-        const localFavs = loadFavoritesLocal(); // [{id}]
+        const localFavs = loadFavoritesLocal();
         const ids = localFavs.map(f => f.id).filter(Boolean);
         if (!ids.length) return [];
 
-        // Fetch artists by ID
         const { data: artists, error: artistErr } = await supa
           .from("artists")
           .select("id,name,slug,country,region_sub")
@@ -198,7 +220,6 @@
         const artistMap = {};
         (artists || []).forEach(a => { artistMap[a.id] = a; });
 
-        // Fetch profile images
         const profileMap = {};
         const { data: pics, error: picErr } = await supa
           .from("v_artist_profile_image")
@@ -213,7 +234,6 @@
           console.warn("Profile image fetch error:", picErr.message);
         }
 
-        // Preserve local order
         return localFavs
           .map(f => {
             const a = artistMap[f.id];
@@ -266,7 +286,6 @@
         grid.innerHTML = "";
         const count = list.length;
 
-        // Clear button state
         clearBtn.disabled = count === 0;
 
         if (!count) {
@@ -290,8 +309,13 @@
                 ${fav.country ? `<p>${fav.country}${fav.region ? " — " + fav.region : ""}</p>` : ""}
               </div>
             </a>
-            <button class="fav-btn" aria-label="Remove ${fav.name || 'artist'} from favorites" data-active="true">×</button>
+
+            <!-- ✅ back on artwork area (absolute overlay) -->
+            <button class="fav-btn" type="button"
+              aria-label="Remove ${fav.name || 'artist'} from favorites"
+              data-active="true">×</button>
           `;
+
           card.querySelector(".fav-btn").addEventListener("click", async (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -299,6 +323,7 @@
             const updated = await loadFavorites();
             render(updated);
           });
+
           grid.appendChild(card);
         });
       }
@@ -309,7 +334,6 @@
         render(updated);
       });
 
-      // ==== init ====
       userId = await detectSessionUser();
       mode = userId ? "account" : "local";
 

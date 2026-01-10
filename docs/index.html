@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Khaya — The home for African artists and galleries</title>
+  <title>Khaya — The home for artists and galleries</title>
   <link rel="icon" type="image/svg+xml" href="./logos/favicon.svg" />
 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -43,10 +43,10 @@
 
       background:
         radial-gradient(1200px 680px at 18% 10%,
-          rgba(242,195,74,0.10) 0%,
-          rgba(23,24,33,1) 35%,
-          rgba(7,7,8,1) 70%,
+          rgba(12,12,14,1) 42%,
+          rgba(7,7,8,1) 74%,
           rgba(4,4,5,1) 100%);
+
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -85,7 +85,6 @@
       border-bottom: 1px solid rgba(0,0,0,0.05);
     }
 
-    /* FULL-WIDTH HEADER CONTENT: logo left, theme button right */
     .header-inner{
       width: 100%;
       padding: 0 clamp(18px, 4vw, 32px);
@@ -95,16 +94,14 @@
       gap: 14px;
     }
 
-    /* Move ONLY the logo slightly to the right */
     .brand { 
       display: inline-flex;
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      margin-left: 24px; /* tweak this: 12px, 24px, 40px, etc. */
+      margin-left: 24px;
     }
 
-    /* Bigger logo, show full logo */
     .brand img {
       height: 60px;
       width: auto;
@@ -200,20 +197,6 @@
       align-content: start;
     }
 
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 7px 12px;
-      border-radius: 999px;
-      width: fit-content;
-      background: var(--accent-weak);
-      color: var(--accent);
-      font-weight: 700;
-      letter-spacing: 0.02em;
-      font-size: 0.92rem;
-    }
-
     h1 {
       margin: 0;
       font-size: clamp(1.35rem, 1.0rem + 1.4vw, 2.2rem);
@@ -264,7 +247,6 @@
       line-height: 1.65;
     }
 
-    /* RIGHT SIDE: two aligned cards like screenshot */
     .side {
       display: grid;
       gap: 16px;
@@ -289,16 +271,10 @@
       flex-wrap: wrap;
     }
 
-    /* Stack buttons (like screenshot) */
-    .cta-row .pill-link {
-      flex: 1 1 100%;
-    }
+    .cta-row .pill-link { flex: 1 1 100%; }
 
-    /* Optional: inline buttons on wide screens */
     @media (min-width: 980px) {
-      .cta-row .pill-link {
-        flex: 0 0 auto;
-      }
+      .cta-row .pill-link { flex: 0 0 auto; }
     }
 
     .divider {
@@ -322,10 +298,7 @@
 
     .mail-link:hover { border-bottom-color: var(--accent); }
 
-    /* Footer pinned to bottom for perfect alignment */
-    .card-footer {
-      margin-top: auto;
-    }
+    .card-footer { margin-top: auto; }
 
     footer {
       padding: 22px 0 28px;
@@ -356,15 +329,14 @@
   </style>
 </head>
 
-<body>
+<!-- ✅ Light mode default -->
+<body data-theme="light">
   <header>
     <div class="header-inner">
-      <!-- Logo moved to far left + nudged right a bit -->
       <a class="brand" href="#">
         <img src="./logos/KH gold.png" alt="Khaya" />
       </a>
 
-      <!-- Theme toggle stays on far right -->
       <nav>
         <button
           class="theme-btn"
@@ -380,10 +352,7 @@
   <main id="about">
     <div class="shell">
       <div class="grid">
-        <!-- Left: Hero + Mission -->
         <section class="hero" aria-label="Khaya introduction">
-          <span class="eyebrow">Khaya</span>
-
           <h1>Khaya connects underrepresented artists with galleries around the world.</h1>
 
           <p class="lede">
@@ -402,9 +371,7 @@
           </div>
         </section>
 
-        <!-- Right: Two aligned cards -->
         <aside class="side" aria-label="Galleries and artists actions">
-          <!-- Galleries -->
           <div class="card">
             <div class="card-title">
               <h3>For galleries</h3>
@@ -422,7 +389,6 @@
               >Request registration</a>
             </div>
 
-            <!-- Pinned footer -->
             <div class="card-footer">
               <div class="divider">
                 <div class="mail-line">
@@ -433,7 +399,6 @@
             </div>
           </div>
 
-          <!-- Artists -->
           <div class="card">
             <div class="card-title">
               <h3>For artists</h3>
@@ -463,7 +428,6 @@
               </ul>
             </div>
 
-            <!-- Pinned footer -->
             <div class="card-footer">
               <div class="divider">
                 <div class="mail-line">
